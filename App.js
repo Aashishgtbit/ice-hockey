@@ -129,9 +129,11 @@ function handleBallInteraction(
           startClock(clock),
           dt,
           forceBall(dt, position, velocity, false),
+
           handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
+          damping(dt, velocity),
           set(position, add(position, multiply(velocity, dt))),
-          debug('position', position),
+          // debug('position', position),
         ],
         cond(
           clockRunning(clock),
@@ -143,6 +145,7 @@ function handleBallInteraction(
               velocity,
               dt,
             ),
+            damping(dt, velocity),
             set(position, add(position, multiply(velocity, dt))),
             debug('no overlap', position),
           ],
@@ -160,15 +163,15 @@ function handleBallInteraction(
           ),
         ),
         [
-          // startClock(clock),
-          // dt,
           set(velocity, multiply(-1, velocity)),
-          forceBall(dt, position, velocity, true),
-          // handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
+          damping(dt, velocity),
+
           set(position, add(position, multiply(velocity, dt))),
           debug('position', position),
         ],
+        velocity,
       ),
+      damping(dt, velocity),
       handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
       set(position, add(position, multiply(velocity, dt))),
     ],
@@ -225,7 +228,7 @@ function handleBoundaryReflection(position, axis, itemDiameter, velocity, dt) {
 function forceBall(dt, position, velocity, isPlayerStatic, mass = 1) {
   const changeInVelocity = new Value(20);
   // const acc = divide(changeInVelocity, dt);
-  let acc = new Value(20);
+  let acc = new Value(40);
   if (isPlayerStatic) {
     acc = 0;
   }
@@ -333,7 +336,7 @@ function springAnim(dt, position, velocity, anchor, mass = 1, tension = 300) {
   return set(velocity, add(velocity, acc));
 }
 
-function damping(dt, velocity, mass = 1, damping = 12) {
+function damping(dt, velocity, mass = 1, damping = 0.5) {
   const acc = divide(multiply(-1, damping, velocity), mass);
   return set(velocity, add(velocity, multiply(dt, acc)));
 }
