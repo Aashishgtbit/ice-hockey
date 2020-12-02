@@ -65,44 +65,16 @@ const AXIS = {
   X: 'X',
   Y: 'Y',
 };
-// const runSpring = (clock, value, velocity, dest) => {
-//   const state = {
-//     finished: new Value(0),
-//     velocity: new Value(0),
-//     position: new Value(0),
-//     time: new Value(0),
-//   };
-
-//   const config = {
-//     damping: 7,
-//     mass: 1,
-//     stiffness: 121.6,
-//     overshootClamping: false,
-//     restSpeedThreshold: 0.001,
-//     restDisplacementThreshold: 0.001,
-//     toValue: new Value(0),
-//   };
-
-//   return [
-//     cond(clockRunning(clock), 0, [
-//       set(state.finished, 0),
-//       set(state.velocity, velocity),
-//       set(state.position, value),
-//       set(config.toValue, dest),
-//       startClock(clock),
-//     ]),
-//     spring(clock, state, config),
-//     cond(state.finished, stopClock(clock)),
-//     state.position,
-//   ];
-// };
 
 function handleBallInteraction(
   gestureState,
+  gestureState2,
   ballTrans,
   playerVelocity,
-  playerPosition,
-  playerPosition1,
+  // playerPosition,
+  // playerPosition1,
+  player1Position,
+  player2Position,
   axis,
 ) {
   const start = new Value(0);
@@ -110,21 +82,43 @@ function handleBallInteraction(
   const velocity = new Value(0);
   const clock = new Clock();
   const dt = divide(diff(clock), 1000);
-  const pX = axis == AXIS.X ? playerPosition : playerPosition1;
-  const pY = axis === AXIS.Y ? playerPosition : playerPosition1;
+  // const pX = axis == AXIS.X ? playerPosition : playerPosition1;
+  // const pY = axis === AXIS.Y ? playerPosition : playerPosition1;
+
   const ballTransX = ballTrans.x;
   const ballTransY = ballTrans.y;
 
   const playerD = new Value(FINAL_DIAMETER / 2);
-  const dx = sub(add(pX, playerD), ballTransX);
-  const dy = sub(add(pY, playerD), ballTransY);
+  const dx = sub(add(player1Position.transX, playerD), ballTransX);
+  const dy = sub(add(player1Position.transY, playerD), ballTransY);
 
+  const dx2 = sub(add(player2Position.transX, playerD), ballTransX);
+  const dy2 = sub(add(player2Position.transY, playerD), ballTransY);
+
+  const distanceBetweenCenters2 = sqrt(
+    add(multiply(dx2, dx2), multiply(dy2, dy2)),
+  );
   const distanceBetweenCenters = sqrt(add(multiply(dx, dx), multiply(dy, dy)));
   return cond(
-    eq(gestureState, State.ACTIVE),
+    or(eq(gestureState, State.ACTIVE), eq(gestureState2, State.ACTIVE)),
     [
       cond(
-        lessThan(distanceBetweenCenters, (FINAL_DIAMETER + BALL_DIAMETER) / 2),
+        or(
+          and(
+            eq(gestureState, State.ACTIVE),
+            lessThan(
+              distanceBetweenCenters,
+              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+            ),
+          ),
+          and(
+            eq(gestureState2, State.ACTIVE),
+            lessThan(
+              distanceBetweenCenters2,
+              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+            ),
+          ),
+        ),
         [
           startClock(clock),
           dt,
@@ -133,11 +127,24 @@ function handleBallInteraction(
           handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
           damping(dt, velocity),
           set(position, add(position, multiply(velocity, dt))),
-          // debug('position', position),
         ],
         cond(
           clockRunning(clock),
           [
+            cond(
+              or(
+                lessThan(
+                  distanceBetweenCenters,
+                  (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                ),
+                lessThan(
+                  distanceBetweenCenters2,
+                  (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                ),
+              ),
+              [set(velocity, multiply(-1, velocity))],
+            ),
+
             handleBoundaryReflection(
               position,
               axis,
@@ -157,9 +164,15 @@ function handleBallInteraction(
       cond(
         and(
           clockRunning(clock),
-          lessThan(
-            distanceBetweenCenters,
-            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+          or(
+            lessThan(
+              distanceBetweenCenters,
+              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+            ),
+            lessThan(
+              distanceBetweenCenters2,
+              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+            ),
           ),
         ),
         [
@@ -169,7 +182,7 @@ function handleBallInteraction(
           set(position, add(position, multiply(velocity, dt))),
           debug('position', position),
         ],
-        velocity,
+        [velocity],
       ),
       damping(dt, velocity),
       handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
@@ -205,18 +218,10 @@ function handleBoundaryReflection(position, axis, itemDiameter, velocity, dt) {
       [
         cond(
           lessThan(position, itemDiameter / 2),
-          [
-            // forceBall(dt, position, multiply(-1, velocity)),
-            // add(position, multiply(velocity, dt)),
-            multiply(-1, velocity),
-          ],
+          [multiply(-1, velocity)],
           cond(
             greaterThan(position, HEIGHT - itemDiameter / 2),
-            [
-              // forceBall(dt, position, multiply(-1, velocity)),
-              // add(position, multiply(velocity, dt)),
-              multiply(-1, velocity),
-            ],
+            [multiply(-1, velocity)],
             velocity,
           ),
         ),
@@ -227,8 +232,7 @@ function handleBoundaryReflection(position, axis, itemDiameter, velocity, dt) {
 
 function forceBall(dt, position, velocity, isPlayerStatic, mass = 1) {
   const changeInVelocity = new Value(20);
-  // const acc = divide(changeInVelocity, dt);
-  let acc = new Value(40);
+  let acc = new Value(60);
   if (isPlayerStatic) {
     acc = 0;
   }
@@ -242,6 +246,8 @@ function interaction(
   initialOffset,
   axis,
   gestureVelocity,
+  ballPosition,
+  playerVelocity,
 ) {
   const start = new Value(0);
   const dragging = new Value(0);
@@ -249,7 +255,7 @@ function interaction(
   const velocity = new Value(0);
   const clock = new Clock();
   const dt = divide(diff(clock), 1000);
-
+  const axisValue = axis === AXIS.X ? new Value('X') : new Value('Y');
   return [
     cond(
       eq(gestureState, State.ACTIVE),
@@ -261,6 +267,8 @@ function interaction(
         dt,
         set(position, add(start, gestureTranslation)),
         handleBoundaryCondition(position, axis, FINAL_DIAMETER),
+        debug('axis :', axisValue),
+        debug('gestureVelocity :', gestureVelocity),
         position,
       ],
       [
@@ -313,28 +321,28 @@ function handleBoundaryCondition(position, axis, itemDiameter) {
   );
 }
 
-function force(dt, position, velocity, initialOffset, damping = 12, mass = 1) {
-  // return set(
-  //   velocity,
-  //   cond(
-  //     lessThan(position, initialOffset - 1),
-  //     VELOCITY,
-  //     cond(greaterThan(position, initialOffset), -VELOCITY, 0),
-  //   ),
-  // );
+// function force(dt, position, velocity, initialOffset, damping = 12, mass = 1) {
+//   // return set(
+//   //   velocity,
+//   //   cond(
+//   //     lessThan(position, initialOffset - 1),
+//   //     VELOCITY,
+//   //     cond(greaterThan(position, initialOffset), -VELOCITY, 0),
+//   //   ),
+//   // );
 
-  // const dx = multiply(1, sub(position, initialOffset));
-  // debug('dx :', dx);
-  const dv = divide(position, multiply(-1, dt, 50));
-  return set(velocity, dv);
-}
+//   // const dx = multiply(1, sub(position, initialOffset));
+//   // debug('dx :', dx);
+//   const dv = divide(position, multiply(-1, dt, 50));
+//   return set(velocity, dv);
+// }
 
-function springAnim(dt, position, velocity, anchor, mass = 1, tension = 300) {
-  const dist = sub(position, anchor);
-  const acc = divide(multiply(-1, tension, dist), mass);
-  // return set(velocity, add(velocity, multiply(dt, acc)));
-  return set(velocity, add(velocity, acc));
-}
+// function springAnim(dt, position, velocity, anchor, mass = 1, tension = 300) {
+//   const dist = sub(position, anchor);
+//   const acc = divide(multiply(-1, tension, dist), mass);
+//   // return set(velocity, add(velocity, multiply(dt, acc)));
+//   return set(velocity, add(velocity, acc));
+// }
 
 function damping(dt, velocity, mass = 1, damping = 0.5) {
   const acc = divide(multiply(-1, damping, velocity), mass);
@@ -363,6 +371,8 @@ const App = () => {
   const offsetX2 = WIDTH / 2 - FINAL_DIAMETER / 2;
   const offsetY2 = HEIGHT * 0.75 - FINAL_DIAMETER / 2;
   const gestureState2 = new Value(State.UNDETERMINED);
+  const dragVX2 = new Value(0);
+  const dragVY2 = new Value(0);
 
   // Ball
   const ballTransX = new Value(WIDTH / 2);
@@ -396,6 +406,8 @@ const App = () => {
           translationX: dragX2,
           translationY: dragY2,
           state: gestureState2,
+          velocityX: dragVX2,
+          velocityY: dragVY2,
         },
       },
     ],
@@ -420,69 +432,62 @@ const App = () => {
     dragX2,
     offsetX2,
     AXIS.X,
-    0,
+    dragVX2,
   )[0];
-  // const translateY2 = cond(
-  //   eq(gestureState2, State.ACTIVE),
-  //   add(offsetY2, dragY2),
-  //   set(offsetY2, add(offsetY2, dragY2)),
-  // );
+
   const translateY2 = interaction(
     gestureState2,
     dragY2,
     offsetY2,
     AXIS.Y,
-    0,
+    dragVY2,
   )[0];
 
-  // const _ballX = cond(
-  //   eq(gestureState1, State.ACTIVE),
-  //   [stopClock(clock), set(ballX, new Value(WIDTH / 2))],
-  //   [
-  //     set(
-  //       ballX,
-  //       cond(defined(ballX), runSpring(clock, ballX, dragVX, WIDTH / 2), 0),
-  //     ),
-  //   ],
-  // );
-
-  // const _ballY = cond(
-  //   eq(gestureState1, State.ACTIVE),
-  //   [stopClock(clock), set(ballY, new Value(HEIGHT / 2))],
-  //   [
-  //     set(
-  //       ballY,
-  //       cond(
-  //         defined(ballY),
-  //         runSpring(clock, ballY, dragVY, HEIGHT / 2),
-  //         HEIGHT / 2,
-  //       ),
-  //     ),
-  //   ],
-  // );
-
-  // const dx = sub(ballTransX, translateX1);
-  // const dy = sub(ballTransY, translateY1);
-  // const distanceBetweenCenters = sqrt(add(multiply(dx, dx), multiply(dy, dy)));
-
+  // player 1
   const resultX = translateX1;
   const resultY = translateY1;
+  const player1Position = {transX: translateX1, transY: translateY1};
   const player1Velocity = {vx: dragVX, vy: dragVY};
   const ballPosition = {x: ballTransX, y: ballTransY};
+
+  // player 2
+  const resultX2 = translateX2;
+  const resultY2 = translateY2;
+  const player2Position = {transX: translateX2, transY: translateY2};
+  const player2Velocity = {vx: dragVX2, vy: dragVY2};
+  const newBallPosition = {x: ballTransX, y: ballTransY};
+  const player1Properties = {
+    gestureState: gestureState1,
+    velocity: player1Velocity,
+    position: player1Position,
+  };
+
+  const player2Properties = {
+    gestureState: gestureState2,
+    velocity: player2Velocity,
+    position: player2Position,
+  };
+
   const _ballX = handleBallInteraction(
     gestureState1,
+    gestureState2,
     ballPosition,
     player1Velocity,
-    resultX,
-    resultY,
+    // resultX,
+    // resultY,
+    player1Position,
+    player2Position,
     AXIS.X,
   );
   const _ballY = handleBallInteraction(
     gestureState1,
+    gestureState2,
     ballPosition,
     player1Velocity,
-    resultY,
-    resultX,
+    // resultY,
+    // resultX,
+    player1Position,
+    player2Position,
     AXIS.Y,
   );
 
