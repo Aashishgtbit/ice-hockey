@@ -122,10 +122,22 @@ function handleBallInteraction(
         [
           startClock(clock),
           dt,
+          handleBallCollision(
+            position,
+            axis,
+            ballTrans,
+            velocity,
+            player1Position,
+            player2Position,
+            distanceBetweenCenters,
+            distanceBetweenCenters2,
+            dt,
+          ),
           forceBall(dt, position, velocity, false),
 
           handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
           damping(dt, velocity),
+          // set(velocity, multiply(-1, velocity)),
           set(position, add(position, multiply(velocity, dt))),
         ],
         cond(
@@ -154,7 +166,7 @@ function handleBallInteraction(
             ),
             damping(dt, velocity),
             set(position, add(position, multiply(velocity, dt))),
-            debug('no overlap', position),
+            // debug('no overlap', position),
           ],
           set(position, add(position, multiply(velocity, dt))),
         ),
@@ -180,7 +192,7 @@ function handleBallInteraction(
           damping(dt, velocity),
 
           set(position, add(position, multiply(velocity, dt))),
-          debug('position', position),
+          // debug('position', position),
         ],
         [velocity],
       ),
@@ -188,6 +200,147 @@ function handleBallInteraction(
       handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
       set(position, add(position, multiply(velocity, dt))),
     ],
+  );
+}
+
+function handleBallCollision(
+  position,
+  axis,
+  ballPosition,
+  velocity,
+  player1Position,
+  player2Position,
+  distanceBetweenCentersBall1,
+  distanceBetweenCentersBall2,
+  dt,
+) {
+  return set(
+    velocity,
+    cond(
+      axis === AXIS.Y,
+      [
+        cond(
+          lessThan(
+            distanceBetweenCentersBall1,
+            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+          ),
+          [
+            handleVelocityOnCollision(
+              velocity,
+              player1Position,
+              ballPosition,
+              axis,
+            ),
+            // cond(
+            //   and(
+            //     greaterThan(
+            //       add(ballPositon.x, BALL_DIAMETER / 2),
+            //       player1Position.transX,
+            //     ),
+            //   ),
+            //   [
+            //     cond(
+            //       lessThan(ballPositon.y, player1Position.transY),
+            //       [
+            //         cond(
+            //           greaterThan(velocity, 0),
+            //           [multiply(-10, 60)],
+            //           velocity,
+            //         ),
+            //       ],
+            //       [
+            //         cond(
+            //           greaterThan(ballPositon.y, player1Position.transY),
+            //           debug('onBottom', ballPositon.y),
+            //           multiply(10, 60),
+            //         ),
+            //       ],
+            //     ),
+            //   ],
+            //   [velocity],
+            // ),
+          ],
+          [velocity],
+        ),
+      ],
+      [
+        cond(
+          lessThan(
+            distanceBetweenCentersBall1,
+            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+          ),
+          [
+            handleVelocityOnCollision(
+              velocity,
+              player1Position,
+              ballPosition,
+              axis,
+            ),
+            // cond(
+            //   lessThan(ballPositon.x, player1Position.transX),
+            //   [multiply(-10, 60)],
+            //   cond(
+            //     greaterThan(
+            //       ballPositon.x,
+            //       add(player1Position.transX, BALL_DIAMETER / 2),
+            //     ),
+            //     multiply(10, 60),
+            //   ),
+            // ),
+          ],
+          [velocity],
+        ),
+      ],
+    ),
+  );
+}
+
+function handleVelocityOnCollision(
+  velocity,
+  playerPosition,
+  ballPosition,
+  axis,
+) {
+  return block(
+    cond(
+      axis === AXIS.Y,
+      [
+        cond(
+          and(
+            greaterThan(
+              add(ballPosition.x, BALL_DIAMETER / 2),
+              playerPosition.transX,
+            ),
+          ),
+          [
+            cond(
+              lessThan(ballPosition.y, playerPosition.transY),
+              [cond(greaterThan(velocity, 0), [multiply(-10, 60)], velocity)],
+              [
+                cond(
+                  greaterThan(ballPosition.y, playerPosition.transY),
+                  debug('onBottom', ballPosition.y),
+                  multiply(10, 60),
+                ),
+              ],
+            ),
+          ],
+          [velocity],
+        ),
+      ],
+
+      cond(
+        lessThan(ballPosition.x, playerPosition.transX),
+        [multiply(-10, 60)],
+        cond(
+          greaterThan(
+            ballPosition.x,
+            add(playerPosition.transX, BALL_DIAMETER / 2),
+          ),
+          multiply(10, 60),
+        ),
+      ),
+    ),
   );
 }
 
@@ -267,8 +420,8 @@ function interaction(
         dt,
         set(position, add(start, gestureTranslation)),
         handleBoundaryCondition(position, axis, FINAL_DIAMETER),
-        debug('axis :', axisValue),
-        debug('gestureVelocity :', gestureVelocity),
+        // debug('axis :', axisValue),
+        // debug('gestureVelocity :', gestureVelocity),
         position,
       ],
       [
