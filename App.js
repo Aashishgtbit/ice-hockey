@@ -82,9 +82,6 @@ function handleBallInteraction(
   const velocity = new Value(0);
   const clock = new Clock();
   const dt = divide(diff(clock), 1000);
-  // const pX = axis == AXIS.X ? playerPosition : playerPosition1;
-  // const pY = axis === AXIS.Y ? playerPosition : playerPosition1;
-
   const ballTransX = ballTrans.x;
   const ballTransY = ballTrans.y;
 
@@ -94,7 +91,8 @@ function handleBallInteraction(
 
   const dx2 = sub(add(player2Position.transX, playerD), ballTransX);
   const dy2 = sub(add(player2Position.transY, playerD), ballTransY);
-
+  const isPlayer1Collided = new Value(0);
+  const isPlayer2Collided = new Value(0);
   const distanceBetweenCenters2 = sqrt(
     add(multiply(dx2, dx2), multiply(dy2, dy2)),
   );
@@ -104,38 +102,42 @@ function handleBallInteraction(
     [
       cond(
         or(
-          and(
-            eq(gestureState, State.ACTIVE),
-            lessThan(
-              distanceBetweenCenters,
-              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+          cond(
+            and(
+              eq(gestureState, State.ACTIVE),
+              lessThan(
+                distanceBetweenCenters,
+                (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+              ),
             ),
+            set(isPlayer1Collided, 1),
+            set(isPlayer1Collided, 0),
           ),
-          and(
-            eq(gestureState2, State.ACTIVE),
-            lessThan(
-              distanceBetweenCenters2,
-              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+          cond(
+            and(
+              eq(gestureState2, State.ACTIVE),
+              lessThan(
+                distanceBetweenCenters2,
+                (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+              ),
             ),
+            set(isPlayer2Collided, 1),
+            set(isPlayer2Collided, 0),
           ),
         ),
         [
           startClock(clock),
           dt,
-          handleBallCollision(
-            axis,
-            ballTrans,
-            velocity,
-            player1Position,
-            player2Position,
-            distanceBetweenCenters,
-            distanceBetweenCenters2,
+          cond(
+            isPlayer1Collided,
+            handleBallCollision(axis, ballTrans, velocity, player1Position),
+            handleBallCollision(axis, ballTrans, velocity, player2Position),
           ),
+
           forceBall(dt, position, velocity, false),
 
           handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
           damping(dt, velocity),
-          // set(velocity, multiply(-1, velocity)),
           set(position, add(position, multiply(velocity, dt))),
         ],
         cond(
@@ -164,7 +166,6 @@ function handleBallInteraction(
             ),
             damping(dt, velocity),
             set(position, add(position, multiply(velocity, dt))),
-            // debug('no overlap', position),
           ],
           set(position, add(position, multiply(velocity, dt))),
         ),
@@ -190,7 +191,6 @@ function handleBallInteraction(
           damping(dt, velocity),
 
           set(position, add(position, multiply(velocity, dt))),
-          // debug('position', position),
         ],
         [velocity],
       ),
@@ -201,83 +201,13 @@ function handleBallInteraction(
   );
 }
 
-function handleBallCollision(
-  axis,
-  ballPosition,
-  velocity,
-  player1Position,
-  player2Position,
-  distanceBetweenCentersBall1,
-  distanceBetweenCentersBall2,
-) {
+function handleBallCollision(axis, ballPosition, velocity, playerPosition) {
   return set(
     velocity,
     cond(
       axis === AXIS.Y,
-      [
-        cond(
-          lessThan(
-            distanceBetweenCentersBall1,
-            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-          ),
-          [
-            handleVelocityOnCollision(
-              velocity,
-              player1Position,
-              ballPosition,
-              axis,
-            ),
-          ],
-          [velocity],
-        ),
-        cond(
-          lessThan(
-            distanceBetweenCentersBall2,
-            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-          ),
-          [
-            handleVelocityOnCollision(
-              velocity,
-              player2Position,
-              ballPosition,
-              axis,
-            ),
-          ],
-          [velocity],
-        ),
-      ],
-      [
-        cond(
-          lessThan(
-            distanceBetweenCentersBall1,
-            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-          ),
-          [
-            handleVelocityOnCollision(
-              velocity,
-              player1Position,
-              ballPosition,
-              axis,
-            ),
-          ],
-          [velocity],
-        ),
-        cond(
-          lessThan(
-            distanceBetweenCentersBall2,
-            (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-          ),
-          [
-            handleVelocityOnCollision(
-              velocity,
-              player2Position,
-              ballPosition,
-              axis,
-            ),
-          ],
-          [velocity],
-        ),
-      ],
+      [handleVelocityOnCollision(velocity, playerPosition, ballPosition, axis)],
+      [handleVelocityOnCollision(velocity, playerPosition, ballPosition, axis)],
     ),
   );
 }
