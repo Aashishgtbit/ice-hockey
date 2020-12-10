@@ -52,7 +52,12 @@ import Animated, {
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
+const AVAILABLE_WIDTH = width;
+const AVAILABLE_HEIGHT = height;
+const SIDE_BORDER_WIDTH = 10;
+const WIDTH = width - 2 * SIDE_BORDER_WIDTH;
+const HEIGHT = height - 2 * SIDE_BORDER_WIDTH;
 const RADIUS = 50;
 const STROKE_WIDTH = 2.5;
 const FINAL_RADIUS = RADIUS + STROKE_WIDTH;
@@ -61,6 +66,7 @@ const VELOCITY_THRESHOLD = 0.5;
 const POSITION_THRESHOLD = WIDTH / 2;
 const VELOCITY = 100;
 const BALL_DIAMETER = (4 * RADIUS) / 3;
+
 const AXIS = {
   X: 'X',
   Y: 'Y',
@@ -331,13 +337,14 @@ function interaction(
       eq(gestureState, State.ACTIVE),
       [
         // debug('gestureTranslation', gestureTranslation),
-        // debug('position :', position),
+        debug('position :', position),
+        debug('axis :', axisValue),
         cond(eq(dragging, 0), [set(dragging, 1), set(start, position)]),
         stopClock(clock),
         dt,
         set(position, add(start, gestureTranslation)),
         handleBoundaryCondition(position, axis, FINAL_DIAMETER),
-        // debug('axis :', axisValue),
+
         // debug('gestureVelocity :', gestureVelocity),
         position,
       ],
@@ -570,9 +577,25 @@ const App = () => {
 
   return (
     <>
-      {/* <StatusBar /> */}
+      <StatusBar />
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
+          <View
+            style={{
+              width: AVAILABLE_WIDTH,
+              height: SIDE_BORDER_WIDTH,
+              backgroundColor: '#00FFFF',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <View
+              style={{
+                width: AVAILABLE_WIDTH / 4,
+                height: SIDE_BORDER_WIDTH,
+                backgroundColor: '#ffe0fe',
+              }}></View>
+          </View>
           {/* <Animated.Code>
             {() => cond(eq(gestureState1, State.BEGAN), call([], startDrag))}
           </Animated.Code>
@@ -581,91 +604,76 @@ const App = () => {
           </Animated.Code> */}
           <Svg>
             <AnimatedCircle
-              // cx={WIDTH / 2}
-              // cy={HEIGHT / 2}
               cx={_ballX}
               cy={_ballY}
               r={RADIUS / 1.5}
               fill="blue"
               stroke="blue"
             />
-            <View style={styles.playersHandle}>
-              <PanGestureHandler
-                onGestureEvent={onGestureEvent1}
-                onHandlerStateChange={onGestureEvent1}>
-                <Animated.View
-                  style={{
-                    width: FINAL_DIAMETER,
-                    height: FINAL_DIAMETER,
-                    borderRadius: FINAL_DIAMETER / 2,
-                    transform: [
-                      {translateX: translateX1},
-                      {translateY: translateY1},
-                    ],
-                  }}>
-                  <Svg
-                    width={FINAL_DIAMETER}
-                    height={FINAL_DIAMETER}
-                    viewBox={`${0} ${0} ${FINAL_DIAMETER} ${FINAL_DIAMETER}`}>
-                    <AnimatedCircle
-                      cx={FINAL_DIAMETER / 2}
-                      cy={FINAL_DIAMETER / 2}
-                      r={RADIUS}
-                      stroke="blue"
-                      strokeWidth={STROKE_WIDTH}
-                      fill="orange"
-                    />
-                    <SvgText
-                      fill="none"
-                      stroke="purple"
-                      x={FINAL_DIAMETER / 2}
-                      y={FINAL_DIAMETER / 2}
-                      textAnchor="middle">
-                      Player1
-                    </SvgText>
-                  </Svg>
-                </Animated.View>
-              </PanGestureHandler>
-            </View>
-            <View style={styles.playersHandle}>
-              <PanGestureHandler
-                onGestureEvent={onGestureEvent2}
-                onHandlerStateChange={onGestureEvent2}>
-                <Animated.View
-                  style={{
-                    width: FINAL_DIAMETER,
-                    height: FINAL_DIAMETER,
-                    borderRadius: FINAL_DIAMETER / 2,
-                    transform: [
-                      {translateX: translateX2},
-                      {translateY: translateY2},
-                    ],
-                  }}>
-                  <Svg
-                    width={FINAL_DIAMETER}
-                    height={FINAL_DIAMETER}
-                    viewBox={`${0} ${0} ${FINAL_DIAMETER} ${FINAL_DIAMETER}`}>
-                    <AnimatedCircle
-                      cx={FINAL_DIAMETER / 2}
-                      cy={FINAL_DIAMETER / 2}
-                      r={RADIUS}
-                      stroke="blue"
-                      strokeWidth={STROKE_WIDTH}
-                      fill="red"
-                    />
-                    <SvgText
-                      fill="none"
-                      stroke="purple"
-                      x={FINAL_DIAMETER / 2}
-                      y={FINAL_DIAMETER / 2}
-                      textAnchor="middle">
-                      Player2
-                    </SvgText>
-                  </Svg>
-                </Animated.View>
-              </PanGestureHandler>
-            </View>
+
+            <PanGestureHandler
+              onGestureEvent={onGestureEvent1}
+              onHandlerStateChange={onGestureEvent1}>
+              <Animated.View
+                style={{
+                  width: FINAL_DIAMETER,
+                  height: FINAL_DIAMETER,
+                  borderRadius: FINAL_DIAMETER / 2,
+                  transform: [
+                    {translateX: translateX1},
+                    {translateY: translateY1},
+                  ],
+                  backgroundColor: '#f00',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 4,
+                  borderColor: '#00f',
+                }}>
+                <Text style={styles.boldWhite}>Player1</Text>
+              </Animated.View>
+            </PanGestureHandler>
+
+            <PanGestureHandler
+              onGestureEvent={onGestureEvent2}
+              onHandlerStateChange={onGestureEvent2}>
+              <Animated.View
+                style={{
+                  width: FINAL_DIAMETER,
+                  height: FINAL_DIAMETER,
+                  borderRadius: FINAL_DIAMETER / 2,
+                  transform: [
+                    {translateX: translateX2},
+                    {translateY: sub(translateY2, FINAL_DIAMETER)},
+                  ],
+                  backgroundColor: '#FFA500',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 4,
+                  borderColor: '#00f',
+                }}>
+                <Text style={styles.boldWhite}>Player2</Text>
+              </Animated.View>
+            </PanGestureHandler>
           </Svg>
+          <View
+            style={{
+              width: AVAILABLE_WIDTH,
+              height: SIDE_BORDER_WIDTH,
+              backgroundColor: '#00FFFF',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              bottom: SIDE_BORDER_WIDTH * 2,
+            }}>
+            <View
+              style={{
+                width: AVAILABLE_WIDTH / 4,
+                height: SIDE_BORDER_WIDTH,
+                backgroundColor: '#ffe0fe',
+              }}></View>
+          </View>
         </View>
       </SafeAreaView>
     </>
@@ -683,16 +691,22 @@ const styles = StyleSheet.create({
   },
 
   wrapperParentContainer: {
-    flex: 2,
-    flexDirection: 'column',
     backgroundColor: '#ffe0fe',
+    width: AVAILABLE_WIDTH,
+    height: AVAILABLE_HEIGHT,
+    borderLeftWidth: SIDE_BORDER_WIDTH,
+    borderRightWidth: SIDE_BORDER_WIDTH,
+    borderColor: '#00FFFF',
   },
 
   playersHandle: {
-    flex: 1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    backgroundColor: '#f00',
+    position: 'relative',
+    width: WIDTH,
+    height: HEIGHT / 2,
+  },
+  boldWhite: {
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 
