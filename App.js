@@ -65,7 +65,7 @@ const FINAL_DIAMETER = 2 * (RADIUS + STROKE_WIDTH);
 const VELOCITY_THRESHOLD = 0.5;
 const POSITION_THRESHOLD = WIDTH / 2;
 const VELOCITY = 100;
-const BALL_DIAMETER = (4 * RADIUS) / 3;
+const BALL_DIAMETER = (3 * RADIUS) / 3;
 
 const AXIS = {
   X: 'X',
@@ -142,7 +142,14 @@ function handleBallInteraction(
 
           forceBall(dt, position, velocity, false),
 
-          handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
+          handleBoundaryReflection(
+            position,
+            axis,
+            BALL_DIAMETER,
+            velocity,
+            dt,
+            ballTrans,
+          ),
           damping(dt, velocity),
           set(position, add(position, multiply(velocity, dt))),
         ],
@@ -169,6 +176,7 @@ function handleBallInteraction(
               BALL_DIAMETER,
               velocity,
               dt,
+              ballTrans,
             ),
             damping(dt, velocity),
             set(position, add(position, multiply(velocity, dt))),
@@ -201,7 +209,14 @@ function handleBallInteraction(
         [velocity],
       ),
       damping(dt, velocity),
-      handleBoundaryReflection(position, axis, BALL_DIAMETER, velocity, dt),
+      handleBoundaryReflection(
+        position,
+        axis,
+        BALL_DIAMETER,
+        velocity,
+        dt,
+        ballTrans,
+      ),
       set(position, add(position, multiply(velocity, dt))),
     ],
   );
@@ -267,42 +282,47 @@ function handleVelocityOnCollision(
   );
 }
 
-function handleBoundaryReflection(position, axis, itemDiameter, velocity, dt) {
+function handleBoundaryReflection(
+  position,
+  axis,
+  itemDiameter,
+  velocity,
+  dt,
+  ballTrans,
+) {
+  const ballX = ballTrans.x;
+  const ballY = ballTrans.y;
+
   return set(
     velocity,
+
+    // cond(
     cond(
       axis === AXIS.X,
       [
         cond(
-          lessThan(position, itemDiameter / 2),
-          [
-            // forceBall(dt, position, multiply(-1, velocity)),
-            // add(position, multiply(velocity, dt)),
-            multiply(-1, velocity),
-          ],
+          lessThan(ballX, itemDiameter / 2),
+          [multiply(-1, velocity)],
           cond(
-            greaterThan(position, WIDTH - itemDiameter / 2),
-            [
-              // forceBall(dt, position, multiply(-1, velocitsy)),
-              // add(position, multiply(velocity, dt)),
-              multiply(-1, velocity),
-            ],
+            greaterThan(ballX, WIDTH - itemDiameter / 2),
+            [multiply(-1, velocity)],
             velocity,
           ),
         ),
       ],
       [
         cond(
-          lessThan(position, itemDiameter / 2),
+          lessThan(ballY, itemDiameter / 2),
           [multiply(-1, velocity)],
           cond(
-            greaterThan(position, HEIGHT - itemDiameter / 2),
+            greaterThan(ballY, HEIGHT - itemDiameter / 2),
             [multiply(-1, velocity)],
             velocity,
           ),
         ),
       ],
     ),
+    // ),
   );
 }
 
@@ -316,15 +336,7 @@ function forceBall(dt, position, velocity, isPlayerStatic, mass = 1) {
   return set(velocity, add(velocity, acc));
 }
 
-function interaction(
-  gestureState,
-  gestureTranslation,
-  initialOffset,
-  axis,
-  gestureVelocity,
-  ballPosition,
-  playerVelocity,
-) {
+function interaction(gestureState, gestureTranslation, initialOffset, axis) {
   const start = new Value(0);
   const dragging = new Value(0);
   const position = new Value(initialOffset);
@@ -427,11 +439,10 @@ function damping(dt, velocity, mass = 1, damping = 0.5) {
 }
 
 const App = () => {
-  const clock = new Clock();
-
-  const TOSS_SEC = 0.2;
   console.log('width :', WIDTH);
   console.log('Height :', HEIGHT);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
   // player 1
   const dragX1 = new Value(0);
   const dragY1 = new Value(0);
@@ -491,34 +502,16 @@ const App = () => {
     {useNativeDriver: true},
   );
 
-  const p1 = interaction(gestureState1, dragX1, offsetX1, AXIS.X, dragVX);
+  const p1 = interaction(gestureState1, dragX1, offsetX1, AXIS.X);
 
   const translateX1 = p1[0];
   const offP1 = p1[1];
 
-  const translateY1 = interaction(
-    gestureState1,
-    dragY1,
-    offsetY1,
-    AXIS.Y,
-    dragVY,
-  )[0];
+  const translateY1 = interaction(gestureState1, dragY1, offsetY1, AXIS.Y)[0];
 
-  const translateX2 = interaction(
-    gestureState2,
-    dragX2,
-    offsetX2,
-    AXIS.X,
-    dragVX2,
-  )[0];
+  const translateX2 = interaction(gestureState2, dragX2, offsetX2, AXIS.X)[0];
 
-  const translateY2 = interaction(
-    gestureState2,
-    dragY2,
-    offsetY2,
-    AXIS.Y,
-    dragVY2,
-  )[0];
+  const translateY2 = interaction(gestureState2, dragY2, offsetY2, AXIS.Y)[0];
 
   // player 1
   const resultX = translateX1;
@@ -577,7 +570,7 @@ const App = () => {
 
   return (
     <>
-      <StatusBar />
+      <StatusBar hidden />
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
           <View
@@ -606,7 +599,7 @@ const App = () => {
             <AnimatedCircle
               cx={_ballX}
               cy={_ballY}
-              r={RADIUS / 1.5}
+              r={BALL_DIAMETER / 2}
               fill="blue"
               stroke="blue"
             />
@@ -673,6 +666,28 @@ const App = () => {
                 height: SIDE_BORDER_WIDTH,
                 backgroundColor: '#ffe0fe',
               }}></View>
+          </View>
+          <View
+            style={{
+              zIndex: 999999,
+              top: HEIGHT / 2 - 50,
+              left: WIDTH - 50,
+              height: 100,
+              width: 50,
+              backgroundColor: 'aqua',
+              position: 'absolute',
+              opacity: 0.5,
+              display: 'flex',
+            }}>
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <Text style={{fontSize: 20, color: 'red'}}>{player1Score}</Text>
+            </View>
+            <View style={{height: 2, backgroundColor: 'orange'}} />
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              <Text style={{fontSize: 20, color: 'blue'}}>{player2Score}</Text>
+            </View>
           </View>
         </View>
       </SafeAreaView>
