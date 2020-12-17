@@ -296,33 +296,51 @@ function handleBoundaryReflection(
   return set(
     velocity,
 
-    // cond(
     cond(
-      axis === AXIS.X,
+      and(
+        lessThan(ballY, itemDiameter / 2),
+        greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8),
+        lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8),
+      ),
+      [velocity],
       [
         cond(
-          lessThan(ballX, itemDiameter / 2),
-          [multiply(-1, velocity)],
-          cond(
-            greaterThan(ballX, WIDTH - itemDiameter / 2),
-            [multiply(-1, velocity)],
-            velocity,
-          ),
-        ),
-      ],
-      [
-        cond(
-          lessThan(ballY, itemDiameter / 2),
-          [multiply(-1, velocity)],
-          cond(
+          and(
             greaterThan(ballY, HEIGHT - itemDiameter / 2),
-            [multiply(-1, velocity)],
-            velocity,
+            greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8),
+            lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8),
           ),
+          [velocity],
+          [
+            cond(
+              axis === AXIS.X,
+              [
+                cond(
+                  lessThan(ballX, itemDiameter / 2),
+                  [multiply(-1, velocity)],
+                  cond(
+                    greaterThan(ballX, WIDTH - itemDiameter / 2),
+                    [multiply(-1, velocity)],
+                    velocity,
+                  ),
+                ),
+              ],
+              [
+                cond(
+                  lessThan(ballY, itemDiameter / 2),
+                  [multiply(-1, velocity)],
+                  cond(
+                    greaterThan(ballY, HEIGHT - itemDiameter / 2),
+                    [multiply(-1, velocity)],
+                    velocity,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ),
-    // ),
   );
 }
 
