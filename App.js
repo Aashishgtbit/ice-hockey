@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -48,6 +48,8 @@ import Animated, {
   block,
   not,
   and,
+  useValue,
+  useCode,
 } from 'react-native-reanimated';
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
 
@@ -66,6 +68,7 @@ const VELOCITY_THRESHOLD = 0.5;
 const POSITION_THRESHOLD = WIDTH / 2;
 const VELOCITY = 100;
 const BALL_DIAMETER = (3 * RADIUS) / 3;
+const PLAYER = {PLAYER1: 'PLAYER1', PLAYER2: 'PLAYER2'};
 
 const AXIS = {
   X: 'X',
@@ -77,86 +80,129 @@ function handleBallInteraction(
   gestureState2,
   ballTrans,
   playerVelocity,
-  // playerPosition,
-  // playerPosition1,
   player1Position,
   player2Position,
   axis,
 ) {
-  const start = new Value(0);
+  const start = useValue(0);
   const position = axis === AXIS.X ? ballTrans.x : ballTrans.y;
-  const velocity = new Value(0);
+  const velocity = useValue(0);
   const clock = new Clock();
   const dt = divide(diff(clock), 1000);
   const ballTransX = ballTrans.x;
   const ballTransY = ballTrans.y;
 
-  const playerD = new Value(FINAL_DIAMETER / 2);
+  const playerD = useValue(FINAL_DIAMETER / 2);
   const dx = sub(add(player1Position.transX, playerD), ballTransX);
   const dy = sub(add(player1Position.transY, playerD), ballTransY);
 
   const dx2 = sub(add(player2Position.transX, playerD), ballTransX);
   const dy2 = sub(add(player2Position.transY, playerD), ballTransY);
-  const isPlayer1Collided = new Value(0);
-  const isPlayer2Collided = new Value(0);
+  const isPlayer1Collided = useValue(0);
+  const isPlayer2Collided = useValue(0);
   const distanceBetweenCenters2 = sqrt(
     add(multiply(dx2, dx2), multiply(dy2, dy2)),
   );
   const distanceBetweenCenters = sqrt(add(multiply(dx, dx), multiply(dy, dy)));
+
   return cond(
-    or(eq(gestureState, State.ACTIVE), eq(gestureState2, State.ACTIVE)),
+    or(lessThan(ballTrans.y, -20), greaterThan(ballTrans.y, HEIGHT + 20)),
+    [
+      stopClock(clock),
+      set(velocity, 0),
+      cond(
+        axis === AXIS.X,
+        set(position, WIDTH / 2),
+        set(position, HEIGHT / 2),
+      ),
+    ],
     [
       cond(
-        or(
-          cond(
-            and(
-              eq(gestureState, State.ACTIVE),
-              lessThan(
-                distanceBetweenCenters,
-                (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-              ),
-            ),
-            set(isPlayer1Collided, 1),
-            set(isPlayer1Collided, 0),
-          ),
-          cond(
-            and(
-              eq(gestureState2, State.ACTIVE),
-              lessThan(
-                distanceBetweenCenters2,
-                (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-              ),
-            ),
-            set(isPlayer2Collided, 1),
-            set(isPlayer2Collided, 0),
-          ),
-        ),
+        or(eq(gestureState, State.ACTIVE), eq(gestureState2, State.ACTIVE)),
         [
-          startClock(clock),
-          dt,
           cond(
-            isPlayer1Collided,
-            handleBallCollision(axis, ballTrans, velocity, player1Position),
-            handleBallCollision(axis, ballTrans, velocity, player2Position),
-          ),
+            or(
+              cond(
+                and(
+                  eq(gestureState, State.ACTIVE),
+                  lessThan(
+                    distanceBetweenCenters,
+                    (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                  ),
+                ),
+                set(isPlayer1Collided, 1),
+                set(isPlayer1Collided, 0),
+              ),
+              cond(
+                and(
+                  eq(gestureState2, State.ACTIVE),
+                  lessThan(
+                    distanceBetweenCenters2,
+                    (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                  ),
+                ),
+                set(isPlayer2Collided, 1),
+                set(isPlayer2Collided, 0),
+              ),
+            ),
+            [
+              startClock(clock),
+              dt,
+              cond(
+                isPlayer1Collided,
+                handleBallCollision(axis, ballTrans, velocity, player1Position),
+                handleBallCollision(axis, ballTrans, velocity, player2Position),
+              ),
 
-          forceBall(dt, position, velocity, false),
+              forceBall(dt, position, velocity, false),
 
-          handleBoundaryReflection(
-            position,
-            axis,
-            BALL_DIAMETER,
-            velocity,
-            dt,
-            ballTrans,
-          ),
-          damping(dt, velocity),
-          set(position, add(position, multiply(velocity, dt))),
-        ],
-        cond(
-          clockRunning(clock),
-          [
+              handleBoundaryReflection(
+                position,
+                axis,
+                BALL_DIAMETER,
+                velocity,
+                dt,
+                ballTrans,
+              ),
+              damping(dt, velocity),
+              set(position, add(position, multiply(velocity, dt))),
+            ],
             cond(
+              clockRunning(clock),
+              [
+                cond(
+                  or(
+                    lessThan(
+                      distanceBetweenCenters,
+                      (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                    ),
+                    lessThan(
+                      distanceBetweenCenters2,
+                      (FINAL_DIAMETER + BALL_DIAMETER) / 2,
+                    ),
+                  ),
+                  [set(velocity, multiply(-1, velocity))],
+                ),
+
+                handleBoundaryReflection(
+                  position,
+                  axis,
+                  BALL_DIAMETER,
+                  velocity,
+                  dt,
+                  ballTrans,
+                ),
+                damping(dt, velocity),
+                set(position, add(position, multiply(velocity, dt))),
+              ],
+              set(position, add(position, multiply(velocity, dt))),
+            ),
+          ),
+        ],
+        [
+          cond(
+            and(
+              clockRunning(clock),
               or(
                 lessThan(
                   distanceBetweenCenters,
@@ -167,57 +213,27 @@ function handleBallInteraction(
                   (FINAL_DIAMETER + BALL_DIAMETER) / 2,
                 ),
               ),
-              [set(velocity, multiply(-1, velocity))],
             ),
+            [
+              set(velocity, multiply(-1, velocity)),
+              damping(dt, velocity),
 
-            handleBoundaryReflection(
-              position,
-              axis,
-              BALL_DIAMETER,
-              velocity,
-              dt,
-              ballTrans,
-            ),
-            damping(dt, velocity),
-            set(position, add(position, multiply(velocity, dt))),
-          ],
-          set(position, add(position, multiply(velocity, dt))),
-        ),
-      ),
-    ],
-    [
-      cond(
-        and(
-          clockRunning(clock),
-          or(
-            lessThan(
-              distanceBetweenCenters,
-              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-            ),
-            lessThan(
-              distanceBetweenCenters2,
-              (FINAL_DIAMETER + BALL_DIAMETER) / 2,
-            ),
+              set(position, add(position, multiply(velocity, dt))),
+            ],
+            [velocity],
           ),
-        ),
-        [
-          set(velocity, multiply(-1, velocity)),
           damping(dt, velocity),
-
+          handleBoundaryReflection(
+            position,
+            axis,
+            BALL_DIAMETER,
+            velocity,
+            dt,
+            ballTrans,
+          ),
           set(position, add(position, multiply(velocity, dt))),
         ],
-        [velocity],
       ),
-      damping(dt, velocity),
-      handleBoundaryReflection(
-        position,
-        axis,
-        BALL_DIAMETER,
-        velocity,
-        dt,
-        ballTrans,
-      ),
-      set(position, add(position, multiply(velocity, dt))),
     ],
   );
 }
@@ -345,8 +361,8 @@ function handleBoundaryReflection(
 }
 
 function forceBall(dt, position, velocity, isPlayerStatic, mass = 1) {
-  const changeInVelocity = new Value(20);
-  let acc = new Value(60);
+  const changeInVelocity = useValue(20);
+  let acc = useValue(60);
   if (isPlayerStatic) {
     acc = 0;
   }
@@ -354,42 +370,41 @@ function forceBall(dt, position, velocity, isPlayerStatic, mass = 1) {
   return set(velocity, add(velocity, acc));
 }
 
-function interaction(gestureState, gestureTranslation, initialOffset, axis) {
-  const start = new Value(0);
-  const dragging = new Value(0);
-  const position = new Value(initialOffset);
-  const velocity = new Value(0);
+function interaction(
+  gestureState,
+  gestureTranslation,
+  initialOffset,
+  axis,
+  currentActivePlayer,
+) {
+  const start = useValue(0);
+  const dragging = useValue(0);
+  const position = useValue(initialOffset);
+  const velocity = useValue(0);
   const clock = new Clock();
   const dt = divide(diff(clock), 1000);
-  const axisValue = axis === AXIS.X ? new Value('X') : new Value('Y');
+  const axisValue = axis === AXIS.X ? useValue('X') : useValue('Y');
   return [
     cond(
       eq(gestureState, State.ACTIVE),
       [
-        // debug('gestureTranslation', gestureTranslation),
-        debug('position :', position),
-        debug('axis :', axisValue),
         cond(eq(dragging, 0), [set(dragging, 1), set(start, position)]),
         stopClock(clock),
         dt,
         set(position, add(start, gestureTranslation)),
-        handleBoundaryCondition(position, axis, FINAL_DIAMETER),
-
-        // debug('gestureVelocity :', gestureVelocity),
+        handleBoundaryCondition(
+          position,
+          axis,
+          FINAL_DIAMETER,
+          currentActivePlayer,
+        ),
         position,
       ],
       [
         set(dragging, 0),
         startClock(clock),
-        cond(neq(gestureState, State.UNDETERMINED), [
-          // set(velocity, gestureVelocity),
-          // force(dt, sub(position, gestureTranslation), velocity, initialOffset),
-          // cond(lessThan(abs(velocity), VELOCITY_THRESHOLD), stopClock(clock)),
-          // springAnim(dt, position, velocity, initialOffset),
-          // damping(dt, velocity),
-        ]),
+        cond(neq(gestureState, State.UNDETERMINED), []),
         stopClock(clock),
-        // debug('position :', position),
         set(position, add(position, multiply(velocity, dt))),
       ],
     ),
@@ -397,7 +412,23 @@ function interaction(gestureState, gestureTranslation, initialOffset, axis) {
   ];
 }
 
-function handleBoundaryCondition(position, axis, itemDiameter) {
+function handleBoundaryCondition(
+  position,
+  axis,
+  itemDiameter,
+  currentActivePlayer,
+) {
+  let playerRange = {
+    min: 0,
+    max: HEIGHT,
+  };
+  if (currentActivePlayer === PLAYER.PLAYER1) {
+    playerRange.min = 0;
+    playerRange.max = HEIGHT / 2 - itemDiameter;
+  } else {
+    playerRange.min = HEIGHT / 2;
+    playerRange.max = HEIGHT - itemDiameter;
+  }
   return set(
     position,
     cond(
@@ -415,11 +446,11 @@ function handleBoundaryCondition(position, axis, itemDiameter) {
       ],
       [
         cond(
-          lessThan(position, 0),
-          [0],
+          lessThan(position, playerRange.min),
+          [playerRange.min],
           cond(
-            greaterThan(position, HEIGHT - itemDiameter),
-            [HEIGHT - itemDiameter],
+            greaterThan(position, playerRange.max),
+            [playerRange.max],
             position,
           ),
         ),
@@ -459,34 +490,33 @@ function damping(dt, velocity, mass = 1, damping = 0.5) {
 const App = () => {
   console.log('width :', WIDTH);
   console.log('Height :', HEIGHT);
-  const [player1Score, setPlayer1Score] = useState(0);
-  const [player2Score, setPlayer2Score] = useState(0);
+  const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
   // player 1
-  const dragX1 = new Value(0);
-  const dragY1 = new Value(0);
+  const dragX1 = useValue(0);
+  const dragY1 = useValue(0);
   const offsetX1 = WIDTH / 2 - FINAL_DIAMETER / 2;
   const offsetY1 = HEIGHT / 4 - FINAL_DIAMETER / 2;
-  const gestureState1 = new Value(State.UNDETERMINED);
-  const dragVX = new Value(0);
-  const dragVY = new Value(0);
+  const gestureState1 = useValue(State.UNDETERMINED);
+  const dragVX = useValue(0);
+  const dragVY = useValue(0);
 
   // player2
-  const dragX2 = new Value(0);
-  const dragY2 = new Value(0);
+  const dragX2 = useValue(0);
+  const dragY2 = useValue(0);
 
   const offsetX2 = WIDTH / 2 - FINAL_DIAMETER / 2;
   const offsetY2 = HEIGHT * 0.75 - FINAL_DIAMETER / 2;
-  const gestureState2 = new Value(State.UNDETERMINED);
-  const dragVX2 = new Value(0);
-  const dragVY2 = new Value(0);
+  const gestureState2 = useValue(State.UNDETERMINED);
+  const dragVX2 = useValue(0);
+  const dragVY2 = useValue(0);
 
   // Ball
-  const ballTransX = new Value(WIDTH / 2);
-  const ballTransY = new Value(HEIGHT / 2);
-  const ballOffsetX = new Value(WIDTH / 2);
-  const ballOffsetY = new Value(HEIGHT / 2);
-  const currX = new Value(0);
-  const currY = new Value(0);
+  const ballTransX = useValue(WIDTH / 2);
+  const ballTransY = useValue(HEIGHT / 2);
+  const ballOffsetX = useValue(WIDTH / 2);
+  const ballOffsetY = useValue(HEIGHT / 2);
+  const currX = useValue(0);
+  const currY = useValue(0);
 
   const onGestureEvent1 = Animated.event(
     [
@@ -520,16 +550,40 @@ const App = () => {
     {useNativeDriver: true},
   );
 
-  const p1 = interaction(gestureState1, dragX1, offsetX1, AXIS.X);
+  const p1 = interaction(
+    gestureState1,
+    dragX1,
+    offsetX1,
+    AXIS.X,
+    PLAYER.PLAYER1,
+  );
 
   const translateX1 = p1[0];
   const offP1 = p1[1];
 
-  const translateY1 = interaction(gestureState1, dragY1, offsetY1, AXIS.Y)[0];
+  const translateY1 = interaction(
+    gestureState1,
+    dragY1,
+    offsetY1,
+    AXIS.Y,
+    PLAYER.PLAYER1,
+  )[0];
 
-  const translateX2 = interaction(gestureState2, dragX2, offsetX2, AXIS.X)[0];
+  const translateX2 = interaction(
+    gestureState2,
+    dragX2,
+    offsetX2,
+    AXIS.X,
+    PLAYER.PLAYER2,
+  )[0];
 
-  const translateY2 = interaction(gestureState2, dragY2, offsetY2, AXIS.Y)[0];
+  const translateY2 = interaction(
+    gestureState2,
+    dragY2,
+    offsetY2,
+    AXIS.Y,
+    PLAYER.PLAYER2,
+  )[0];
 
   // player 1
   const resultX = translateX1;
@@ -561,8 +615,6 @@ const App = () => {
     gestureState2,
     ballPosition,
     player1Velocity,
-    // resultX,
-    // resultY,
     player1Position,
     player2Position,
     AXIS.X,
@@ -572,20 +624,54 @@ const App = () => {
     gestureState2,
     ballPosition,
     player1Velocity,
-    // resultY,
-    // resultX,
     player1Position,
     player2Position,
     AXIS.Y,
   );
 
-  const startDrag = ([]) => {
-    console.log('drag started');
-  };
   const stopDrag = ([]) => {
     console.log(' drag stop');
   };
 
+  const updatePlayer1Score = ([]) => {
+    console.log('player1 score update');
+    console.log('player1Score :', player1Score);
+    setPlayer1Score(player1Score + 1);
+  };
+
+  const updatePlayer2Score = ([]) => {
+    console.log('player2 score update');
+    console.log('player2Score :', player2Score);
+    setPlayer2Score(player2Score + 1);
+  };
+
+  useCode(
+    () =>
+      cond(
+        lessThan(ballTransY, -20),
+        call([], () => {
+          const b = scores;
+          b.p2 = b.p2 + 1;
+          console.log('player2Score :', {...b});
+
+          setPlayerScores({...b});
+        }),
+        cond(
+          greaterThan(ballTransY, HEIGHT + 20),
+          call([], () => {
+            const b = scores;
+            b.p1 = b.p1 + 1;
+            console.log('player1Score :', {...b});
+            // setPlayerScores({p1: b.p1, p2: b.p2});
+            setPlayerScores({...b});
+          }),
+        ),
+      ),
+    [ballTransY],
+  );
+
+  // console.log(player1Score, player2Score);
+  const {p1: p1Score, p2: p2Score} = scores;
   return (
     <>
       <StatusBar hidden />
@@ -605,7 +691,8 @@ const App = () => {
                 width: AVAILABLE_WIDTH / 4,
                 height: SIDE_BORDER_WIDTH,
                 backgroundColor: '#ffe0fe',
-              }}></View>
+              }}
+            />
           </View>
           {/* <Animated.Code>
             {() => cond(eq(gestureState1, State.BEGAN), call([], startDrag))}
@@ -677,18 +764,21 @@ const App = () => {
               justifyContent: 'center',
               alignItems: 'center',
               bottom: SIDE_BORDER_WIDTH * 2,
+              zIndex: -1,
             }}>
             <View
               style={{
                 width: AVAILABLE_WIDTH / 4,
                 height: SIDE_BORDER_WIDTH,
                 backgroundColor: '#ffe0fe',
-              }}></View>
+              }}
+            />
           </View>
+
           <View
             style={{
               zIndex: 999999,
-              top: HEIGHT / 2 - 50,
+              top: HEIGHT / 2 - 41,
               left: WIDTH - 50,
               height: 100,
               width: 50,
@@ -699,14 +789,26 @@ const App = () => {
             }}>
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'red'}}>{player1Score}</Text>
+              <Text style={{fontSize: 20, color: 'red'}}>{p2Score}</Text>
             </View>
             <View style={{height: 2, backgroundColor: 'orange'}} />
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'blue'}}>{player2Score}</Text>
+              <Text style={{fontSize: 20, color: 'blue'}}>{p1Score}</Text>
             </View>
           </View>
+          <View
+            style={{
+              zIndex: -1,
+              top: HEIGHT / 2 + 7,
+              left: 0,
+              height: 4,
+              width: WIDTH,
+              backgroundColor: 'aqua',
+              position: 'absolute',
+              opacity: 0.5,
+              // display: 'flex',
+            }}></View>
         </View>
       </SafeAreaView>
     </>
