@@ -52,6 +52,7 @@ import Animated, {
   useCode,
 } from 'react-native-reanimated';
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
+import AnimatedGoal from './GoalText';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const {width, height} = Dimensions.get('window');
@@ -273,7 +274,6 @@ function handleVelocityOnCollision(
               [
                 cond(
                   greaterThan(ballPosition.y, playerPosition.transY),
-                  debug('onBottom', ballPosition.y),
                   multiply(10, 60),
                 ),
               ],
@@ -459,29 +459,6 @@ function handleBoundaryCondition(
   );
 }
 
-// function force(dt, position, velocity, initialOffset, damping = 12, mass = 1) {
-//   // return set(
-//   //   velocity,
-//   //   cond(
-//   //     lessThan(position, initialOffset - 1),
-//   //     VELOCITY,
-//   //     cond(greaterThan(position, initialOffset), -VELOCITY, 0),
-//   //   ),
-//   // );
-
-//   // const dx = multiply(1, sub(position, initialOffset));
-//   // debug('dx :', dx);
-//   const dv = divide(position, multiply(-1, dt, 50));
-//   return set(velocity, dv);
-// }
-
-// function springAnim(dt, position, velocity, anchor, mass = 1, tension = 300) {
-//   const dist = sub(position, anchor);
-//   const acc = divide(multiply(-1, tension, dist), mass);
-//   // return set(velocity, add(velocity, multiply(dt, acc)));
-//   return set(velocity, add(velocity, acc));
-// }
-
 function damping(dt, velocity, mass = 1, damping = 0.5) {
   const acc = divide(multiply(-1, damping, velocity), mass);
   return set(velocity, add(velocity, multiply(dt, acc)));
@@ -491,6 +468,7 @@ const App = () => {
   console.log('width :', WIDTH);
   console.log('Height :', HEIGHT);
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
+  const [showGoalText, setShowGoalText] = useState(false);
   // player 1
   const dragX1 = useValue(0);
   const dragY1 = useValue(0);
@@ -598,17 +576,6 @@ const App = () => {
   const player2Position = {transX: translateX2, transY: translateY2};
   const player2Velocity = {vx: dragVX2, vy: dragVY2};
   const newBallPosition = {x: ballTransX, y: ballTransY};
-  const player1Properties = {
-    gestureState: gestureState1,
-    velocity: player1Velocity,
-    position: player1Position,
-  };
-
-  const player2Properties = {
-    gestureState: gestureState2,
-    velocity: player2Velocity,
-    position: player2Position,
-  };
 
   const _ballX = handleBallInteraction(
     gestureState1,
@@ -629,22 +596,6 @@ const App = () => {
     AXIS.Y,
   );
 
-  const stopDrag = ([]) => {
-    console.log(' drag stop');
-  };
-
-  const updatePlayer1Score = ([]) => {
-    console.log('player1 score update');
-    console.log('player1Score :', player1Score);
-    setPlayer1Score(player1Score + 1);
-  };
-
-  const updatePlayer2Score = ([]) => {
-    console.log('player2 score update');
-    console.log('player2Score :', player2Score);
-    setPlayer2Score(player2Score + 1);
-  };
-
   useCode(
     () =>
       cond(
@@ -653,7 +604,10 @@ const App = () => {
           const b = scores;
           b.p2 = b.p2 + 1;
           console.log('player2Score :', {...b});
-
+          setShowGoalText(true);
+          setTimeout(() => {
+            setShowGoalText(false);
+          }, 1000);
           setPlayerScores({...b});
         }),
         cond(
@@ -662,7 +616,10 @@ const App = () => {
             const b = scores;
             b.p1 = b.p1 + 1;
             console.log('player1Score :', {...b});
-            // setPlayerScores({p1: b.p1, p2: b.p2});
+            setShowGoalText(true);
+            setTimeout(() => {
+              setShowGoalText(false);
+            }, 1000);
             setPlayerScores({...b});
           }),
         ),
@@ -672,9 +629,11 @@ const App = () => {
 
   // console.log(player1Score, player2Score);
   const {p1: p1Score, p2: p2Score} = scores;
+  console.log('showGoalText :', showGoalText);
+  console.log('scores :', scores);
   return (
     <>
-      <StatusBar hidden />
+      {/* <StatusBar hidden /> */}
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
           <View
@@ -694,12 +653,6 @@ const App = () => {
               }}
             />
           </View>
-          {/* <Animated.Code>
-            {() => cond(eq(gestureState1, State.BEGAN), call([], startDrag))}
-          </Animated.Code>
-          <Animated.Code>
-            {() => cond(eq(gestureState1, State.END), call([], stopDrag))}
-          </Animated.Code> */}
           <Svg>
             <AnimatedCircle
               cx={_ballX}
@@ -789,12 +742,12 @@ const App = () => {
             }}>
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'red'}}>{p2Score}</Text>
+              <Text style={{fontSize: 20, color: 'red'}}>{p1Score}</Text>
             </View>
             <View style={{height: 2, backgroundColor: 'orange'}} />
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'blue'}}>{p1Score}</Text>
+              <Text style={{fontSize: 20, color: 'blue'}}>{p2Score}</Text>
             </View>
           </View>
           <View
@@ -807,8 +760,19 @@ const App = () => {
               backgroundColor: 'aqua',
               position: 'absolute',
               opacity: 0.5,
-              // display: 'flex',
             }}></View>
+          {showGoalText && (
+            <View
+              style={{
+                zIndex: 999999,
+                height: HEIGHT,
+                width: WIDTH,
+                position: 'absolute',
+                opacity: 1,
+              }}>
+              <AnimatedGoal />
+            </View>
+          )}
         </View>
       </SafeAreaView>
     </>
