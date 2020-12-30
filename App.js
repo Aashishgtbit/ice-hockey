@@ -61,14 +61,12 @@ const AVAILABLE_HEIGHT = height;
 const SIDE_BORDER_WIDTH = 10;
 const WIDTH = width - 2 * SIDE_BORDER_WIDTH;
 const HEIGHT = height - 2 * SIDE_BORDER_WIDTH;
-const RADIUS = 50;
+const RADIUS = 40;
 const STROKE_WIDTH = 2.5;
 const FINAL_RADIUS = RADIUS + STROKE_WIDTH;
 const FINAL_DIAMETER = 2 * (RADIUS + STROKE_WIDTH);
-const VELOCITY_THRESHOLD = 0.5;
-const POSITION_THRESHOLD = WIDTH / 2;
-const VELOCITY = 100;
-const BALL_DIAMETER = (3 * RADIUS) / 3;
+
+const BALL_DIAMETER = (3 * RADIUS) / 4;
 const PLAYER = {PLAYER1: 'PLAYER1', PLAYER2: 'PLAYER2'};
 
 const AXIS = {
@@ -85,7 +83,6 @@ function handleBallInteraction(
   player2Position,
   axis,
 ) {
-  const start = useValue(0);
   const position = axis === AXIS.X ? ballTrans.x : ballTrans.y;
   const velocity = useValue(0);
   const clock = new Clock();
@@ -315,8 +312,8 @@ function handleBoundaryReflection(
     cond(
       and(
         lessThan(ballY, itemDiameter / 2),
-        greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8),
-        lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8),
+        greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8 + itemDiameter / 2),
+        lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8 - itemDiameter / 2),
       ),
       [velocity],
       [
@@ -465,8 +462,6 @@ function damping(dt, velocity, mass = 1, damping = 0.5) {
 }
 
 const App = () => {
-  console.log('width :', WIDTH);
-  console.log('Height :', HEIGHT);
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
   const [showGoalText, setShowGoalText] = useState(false);
   // player 1
@@ -491,8 +486,6 @@ const App = () => {
   // Ball
   const ballTransX = useValue(WIDTH / 2);
   const ballTransY = useValue(HEIGHT / 2);
-  const ballOffsetX = useValue(WIDTH / 2);
-  const ballOffsetY = useValue(HEIGHT / 2);
   const currX = useValue(0);
   const currY = useValue(0);
 
@@ -595,39 +588,37 @@ const App = () => {
     player2Position,
     AXIS.Y,
   );
-
   useCode(
     () =>
       cond(
-        lessThan(ballTransY, -20),
+        lessThan(_ballY, -20),
         call([], () => {
           const b = scores;
           b.p2 = b.p2 + 1;
           console.log('player2Score :', {...b});
-          setShowGoalText(true);
-          setTimeout(() => {
-            setShowGoalText(false);
-          }, 1000);
           setPlayerScores({...b});
         }),
         cond(
-          greaterThan(ballTransY, HEIGHT + 20),
+          greaterThan(_ballY, HEIGHT + 20),
           call([], () => {
             const b = scores;
             b.p1 = b.p1 + 1;
             console.log('player1Score :', {...b});
-            setShowGoalText(true);
-            setTimeout(() => {
-              setShowGoalText(false);
-            }, 1000);
             setPlayerScores({...b});
           }),
         ),
       ),
-    [ballTransY],
+    [_ballY],
   );
+  useEffect(() => {
+    if (scores.p2 > 0 || scores.p1 > 0) {
+      setShowGoalText(true);
+      setTimeout(() => {
+        setShowGoalText(false);
+      }, 1000);
+    }
+  }, [scores]);
 
-  // console.log(player1Score, player2Score);
   const {p1: p1Score, p2: p2Score} = scores;
   console.log('showGoalText :', showGoalText);
   console.log('scores :', scores);
@@ -638,6 +629,8 @@ const App = () => {
         <View style={styles.wrapperParentContainer}>
           <View
             style={{
+              // position: 'absolute',
+              // zIndex: 99999,
               width: AVAILABLE_WIDTH,
               height: SIDE_BORDER_WIDTH,
               backgroundColor: '#00FFFF',
