@@ -84,11 +84,7 @@ const styles = StyleSheet.create({
   box: {
     width: WIDTH,
     height: HEIGHT,
-
-    // alignSelf: 'center',
-    // backgroundColor: 'plum',
     marginTop: 20,
-    // flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

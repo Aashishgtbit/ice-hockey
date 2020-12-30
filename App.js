@@ -312,16 +312,16 @@ function handleBoundaryReflection(
     cond(
       and(
         lessThan(ballY, itemDiameter / 2),
-        greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8 + itemDiameter / 2),
-        lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8 - itemDiameter / 2),
+        greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 10),
+        lessThan(ballX, (7 * AVAILABLE_WIDTH) / 10),
       ),
       [velocity],
       [
         cond(
           and(
             greaterThan(ballY, HEIGHT - itemDiameter / 2),
-            greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 8),
-            lessThan(ballX, (5 * AVAILABLE_WIDTH) / 8),
+            greaterThan(ballX, (3 * AVAILABLE_WIDTH) / 10),
+            lessThan(ballX, (7 * AVAILABLE_WIDTH) / 10),
           ),
           [velocity],
           [
@@ -530,7 +530,6 @@ const App = () => {
   );
 
   const translateX1 = p1[0];
-  const offP1 = p1[1];
 
   const translateY1 = interaction(
     gestureState1,
@@ -557,18 +556,14 @@ const App = () => {
   )[0];
 
   // player 1
-  const resultX = translateX1;
-  const resultY = translateY1;
+
   const player1Position = {transX: translateX1, transY: translateY1};
   const player1Velocity = {vx: dragVX, vy: dragVY};
   const ballPosition = {x: ballTransX, y: ballTransY};
 
   // player 2
-  const resultX2 = translateX2;
-  const resultY2 = translateY2;
+
   const player2Position = {transX: translateX2, transY: translateY2};
-  const player2Velocity = {vx: dragVX2, vy: dragVY2};
-  const newBallPosition = {x: ballTransX, y: ballTransY};
 
   const _ballX = handleBallInteraction(
     gestureState1,
@@ -595,7 +590,6 @@ const App = () => {
         call([], () => {
           const b = scores;
           b.p2 = b.p2 + 1;
-          console.log('player2Score :', {...b});
           setPlayerScores({...b});
         }),
         cond(
@@ -603,7 +597,6 @@ const App = () => {
           call([], () => {
             const b = scores;
             b.p1 = b.p1 + 1;
-            console.log('player1Score :', {...b});
             setPlayerScores({...b});
           }),
         ),
@@ -618,10 +611,7 @@ const App = () => {
       }, 1000);
     }
   }, [scores]);
-
   const {p1: p1Score, p2: p2Score} = scores;
-  console.log('showGoalText :', showGoalText);
-  console.log('scores :', scores);
   return (
     <>
       {/* <StatusBar hidden /> */}
@@ -640,9 +630,10 @@ const App = () => {
             }}>
             <View
               style={{
-                width: AVAILABLE_WIDTH / 4,
+                width: AVAILABLE_WIDTH * 0.4,
                 height: SIDE_BORDER_WIDTH,
                 backgroundColor: '#ffe0fe',
+                marginRight: 2 * SIDE_BORDER_WIDTH,
               }}
             />
           </View>
@@ -714,9 +705,10 @@ const App = () => {
             }}>
             <View
               style={{
-                width: AVAILABLE_WIDTH / 4,
+                width: AVAILABLE_WIDTH * 0.4,
                 height: SIDE_BORDER_WIDTH,
                 backgroundColor: '#ffe0fe',
+                marginRight: 2 * SIDE_BORDER_WIDTH,
               }}
             />
           </View>
