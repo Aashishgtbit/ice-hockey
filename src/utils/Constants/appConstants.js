@@ -18,3 +18,12 @@ export const AXIS = {
   X: 'X',
   Y: 'Y',
 };
+
+export const COLORS = {
+  BORDER: '#00FFFF',
+  BACKGROUND: '#ffe0fe',
+  PLAYER_1: '#f00',
+  PLAYER_2: '#FFA500',
+  BALL: '#00f',
+  BLUE: '#00f',
+};

@@ -14,7 +14,6 @@ import {
   View,
   Text,
   // StatusBar,
-  Dimensions,
 } from 'react-native';
 
 import {Svg, Circle} from 'react-native-svg';
@@ -29,27 +28,20 @@ import Animated, {
 } from 'react-native-reanimated';
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
 import AnimatedGoal from './GoalText';
-import {interaction, handleBallInteraction} from './src/utils/helper';
-
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const {width, height} = Dimensions.get('window');
-const AVAILABLE_WIDTH = width;
-const AVAILABLE_HEIGHT = height;
-const SIDE_BORDER_WIDTH = 10;
-const WIDTH = width - 2 * SIDE_BORDER_WIDTH;
-const HEIGHT = height - 2 * SIDE_BORDER_WIDTH;
-const RADIUS = 40;
-const STROKE_WIDTH = 2.5;
-// const FINAL_RADIUS = RADIUS + STROKE_WIDTH;
-const FINAL_DIAMETER = 2 * (RADIUS + STROKE_WIDTH);
-
-const BALL_DIAMETER = (3 * RADIUS) / 4;
-const PLAYER = {PLAYER1: 'PLAYER1', PLAYER2: 'PLAYER2'};
-
-const AXIS = {
-  X: 'X',
-  Y: 'Y',
-};
+import {interaction, handleBallInteraction} from './src/utils/helper';
+import {
+  AVAILABLE_HEIGHT,
+  AVAILABLE_WIDTH,
+  WIDTH,
+  SIDE_BORDER_WIDTH,
+  PLAYER,
+  HEIGHT,
+  BALL_DIAMETER,
+  FINAL_DIAMETER,
+  AXIS,
+  COLORS,
+} from './src/utils/Constants/appConstants';
 
 const App = () => {
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
@@ -211,7 +203,7 @@ const App = () => {
             style={{
               width: AVAILABLE_WIDTH,
               height: SIDE_BORDER_WIDTH,
-              backgroundColor: '#00FFFF',
+              backgroundColor: COLORS.BORDER,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -220,7 +212,7 @@ const App = () => {
               style={{
                 width: AVAILABLE_WIDTH * 0.4,
                 height: SIDE_BORDER_WIDTH,
-                backgroundColor: '#ffe0fe',
+                backgroundColor: COLORS.BACKGROUND,
                 marginRight: 2 * SIDE_BORDER_WIDTH,
               }}
             />
@@ -230,7 +222,7 @@ const App = () => {
               cx={_ballX}
               cy={_ballY}
               r={BALL_DIAMETER / 2}
-              fill="blue"
+              fill={COLORS.BALL}
               stroke="blue"
             />
 
@@ -246,12 +238,12 @@ const App = () => {
                     {translateX: translateX1},
                     {translateY: translateY1},
                   ],
-                  backgroundColor: '#f00',
+                  backgroundColor: COLORS.PLAYER_1,
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
                   borderWidth: 4,
-                  borderColor: '#00f',
+                  borderColor: COLORS.BLUE,
                 }}>
                 <Text style={styles.boldWhite}>Player1</Text>
               </Animated.View>
@@ -269,12 +261,12 @@ const App = () => {
                     {translateX: translateX2},
                     {translateY: sub(translateY2, FINAL_DIAMETER)},
                   ],
-                  backgroundColor: '#FFA500',
+                  backgroundColor: COLORS.PLAYER_2,
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
                   borderWidth: 4,
-                  borderColor: '#00f',
+                  borderColor: COLORS.BLUE,
                 }}>
                 <Text style={styles.boldWhite}>Player2</Text>
               </Animated.View>
@@ -284,7 +276,7 @@ const App = () => {
             style={{
               width: AVAILABLE_WIDTH,
               height: SIDE_BORDER_WIDTH,
-              backgroundColor: '#00FFFF',
+              backgroundColor: COLORS.BORDER,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -295,7 +287,7 @@ const App = () => {
               style={{
                 width: AVAILABLE_WIDTH * 0.4,
                 height: SIDE_BORDER_WIDTH,
-                backgroundColor: '#ffe0fe',
+                backgroundColor: COLORS.BACKGROUND,
                 marginRight: 2 * SIDE_BORDER_WIDTH,
               }}
             />
@@ -308,19 +300,28 @@ const App = () => {
               left: WIDTH - 50,
               height: 100,
               width: 50,
-              backgroundColor: 'aqua',
+              backgroundColor: COLORS.BORDER,
               position: 'absolute',
               opacity: 0.5,
               display: 'flex',
             }}>
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'red'}}>{p1Score}</Text>
+              <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>
+                {p1Score}
+              </Text>
             </View>
             <View style={{height: 2, backgroundColor: 'orange'}} />
             <View
               style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 20, color: 'blue'}}>{p2Score}</Text>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  color: COLORS.PLAYER_2,
+                }}>
+                {p2Score}
+              </Text>
             </View>
           </View>
           <View
