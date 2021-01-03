@@ -16,7 +16,7 @@ import {
   // StatusBar,
 } from 'react-native';
 
-import {Svg, Circle} from 'react-native-svg';
+// import {Svg, Circle} from 'react-native-svg';
 import Animated, {
   cond,
   call,
@@ -28,7 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {PanGestureHandler, State} from 'react-native-gesture-handler';
 import AnimatedGoal from './GoalText';
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+// const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 import {interaction, handleBallInteraction} from './src/utils/helper';
 import {
   AVAILABLE_HEIGHT,
@@ -41,6 +41,7 @@ import {
   FINAL_DIAMETER,
   AXIS,
   COLORS,
+  height,
 } from './src/utils/Constants/appConstants';
 
 const App = () => {
@@ -194,6 +195,7 @@ const App = () => {
     }
   }, [scores]);
   const {p1: p1Score, p2: p2Score} = scores;
+
   return (
     <>
       {/* <StatusBar hidden /> */}
@@ -217,71 +219,83 @@ const App = () => {
               }}
             />
           </View>
-          <Svg>
-            <AnimatedCircle
-              cx={_ballX}
-              cy={_ballY}
-              r={BALL_DIAMETER / 2}
-              fill={COLORS.BALL}
-              stroke="blue"
-            />
 
-            <PanGestureHandler
-              onGestureEvent={onGestureEvent1}
-              onHandlerStateChange={onGestureEvent1}>
-              <Animated.View
-                style={{
-                  width: FINAL_DIAMETER,
-                  height: FINAL_DIAMETER,
-                  borderRadius: FINAL_DIAMETER / 2,
-                  transform: [
-                    {translateX: translateX1},
-                    {translateY: translateY1},
-                  ],
-                  backgroundColor: COLORS.PLAYER_1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 4,
-                  borderColor: COLORS.BLUE,
-                }}>
-                <Text style={styles.boldWhite}>Player1</Text>
-              </Animated.View>
-            </PanGestureHandler>
+          <Animated.View
+            style={{
+              width: BALL_DIAMETER,
+              height: BALL_DIAMETER,
+              borderRadius: BALL_DIAMETER / 2,
+              transform: [
+                {translateX: sub(_ballX, BALL_DIAMETER / 2)},
+                {translateY: sub(_ballY, BALL_DIAMETER / 2)},
+              ],
+              backgroundColor: COLORS.BALL,
+              zIndex: 9,
+            }}
+          />
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent1}
+            onHandlerStateChange={onGestureEvent1}>
+            <Animated.View
+              style={{
+                width: FINAL_DIAMETER,
+                height: FINAL_DIAMETER,
+                borderRadius: FINAL_DIAMETER / 2,
+                transform: [
+                  {translateX: translateX1},
+                  {
+                    translateY: sub(translateY1, BALL_DIAMETER),
+                  },
+                ],
+                backgroundColor: COLORS.PLAYER_1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 4,
+                borderColor: COLORS.BLUE,
+              }}>
+              <Text style={styles.boldWhite}>Player1</Text>
+            </Animated.View>
+          </PanGestureHandler>
 
-            <PanGestureHandler
-              onGestureEvent={onGestureEvent2}
-              onHandlerStateChange={onGestureEvent2}>
-              <Animated.View
-                style={{
-                  width: FINAL_DIAMETER,
-                  height: FINAL_DIAMETER,
-                  borderRadius: FINAL_DIAMETER / 2,
-                  transform: [
-                    {translateX: translateX2},
-                    {translateY: sub(translateY2, FINAL_DIAMETER)},
-                  ],
-                  backgroundColor: COLORS.PLAYER_2,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 4,
-                  borderColor: COLORS.BLUE,
-                }}>
-                <Text style={styles.boldWhite}>Player2</Text>
-              </Animated.View>
-            </PanGestureHandler>
-          </Svg>
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent2}
+            onHandlerStateChange={onGestureEvent2}>
+            <Animated.View
+              style={{
+                width: FINAL_DIAMETER,
+                height: FINAL_DIAMETER,
+                borderRadius: FINAL_DIAMETER / 2,
+                transform: [
+                  {translateX: translateX2},
+                  {
+                    translateY: sub(
+                      translateY2,
+                      FINAL_DIAMETER + BALL_DIAMETER,
+                    ),
+                  },
+                ],
+                backgroundColor: COLORS.PLAYER_2,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 4,
+                borderColor: COLORS.BLUE,
+              }}>
+              <Text style={styles.boldWhite}>Player2</Text>
+            </Animated.View>
+          </PanGestureHandler>
+
           <View
             style={{
+              position: 'absolute',
               width: AVAILABLE_WIDTH,
               height: SIDE_BORDER_WIDTH,
               backgroundColor: COLORS.BORDER,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              bottom: SIDE_BORDER_WIDTH * 2,
-              zIndex: -1,
+              top: height - SIDE_BORDER_WIDTH - 2,
             }}>
             <View
               style={{
@@ -306,14 +320,22 @@ const App = () => {
               display: 'flex',
             }}>
             <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>
                 {p1Score}
               </Text>
             </View>
             <View style={{height: 2, backgroundColor: 'orange'}} />
             <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <Text
                 style={{
                   fontSize: 20,
