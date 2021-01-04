@@ -1,18 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect} from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableHighlight,
-  TouchableOpacity,
-} from 'react-native';
+
+import React from 'react';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {
   AVAILABLE_HEIGHT,
   AVAILABLE_WIDTH,
-  COLORS,
-  width,
 } from '../../utils/Constants/appConstants';
 
 const Result = (props) => {
