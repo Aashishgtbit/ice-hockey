@@ -8,13 +8,7 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  Text,
-  // StatusBar,
-} from 'react-native';
+import {SafeAreaView, StyleSheet, View, Text, StatusBar} from 'react-native';
 
 // import {Svg, Circle} from 'react-native-svg';
 import Animated, {
@@ -42,11 +36,15 @@ import {
   AXIS,
   COLORS,
   height,
+  PENULTIMATE_SCORE,
 } from './src/utils/Constants/appConstants';
+import CustomModal from './src/components/CustomModal';
+import Result from './src/components/CustomModal/Result';
 
 const App = () => {
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
   const [showGoalText, setShowGoalText] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
   // player 1
   const dragX1 = useValue(0);
   const dragY1 = useValue(0);
@@ -71,6 +69,11 @@ const App = () => {
   const ballTransY = useValue(HEIGHT / 2);
   const currX = useValue(0);
   const currY = useValue(0);
+
+  const handlResultModalClose = () => {
+    setShowResultModal(false);
+    setPlayerScores({p1: 0, p2: 0});
+  };
 
   const onGestureEvent1 = Animated.event(
     [
@@ -188,10 +191,14 @@ const App = () => {
   );
   useEffect(() => {
     if (scores.p2 > 0 || scores.p1 > 0) {
-      setShowGoalText(true);
-      setTimeout(() => {
-        setShowGoalText(false);
-      }, 1000);
+      if (scores.p2 >= PENULTIMATE_SCORE || scores.p1 >= PENULTIMATE_SCORE) {
+        setShowResultModal(true);
+      } else {
+        setShowGoalText(true);
+        setTimeout(() => {
+          setShowGoalText(false);
+        }, 1000);
+      }
     }
   }, [scores]);
   const {p1: p1Score, p2: p2Score} = scores;
@@ -369,6 +376,17 @@ const App = () => {
               }}>
               <AnimatedGoal />
             </View>
+          )}
+
+          {showResultModal && (
+            <CustomModal isOpen={true} handleModalClose={handlResultModalClose}>
+              <Result
+                handleModalClose={handlResultModalClose}
+                winnerText={
+                  scores.p1 > scores.p2 ? 'Player1 wins' : 'Player2 wins'
+                }
+              />
+            </CustomModal>
           )}
         </View>
       </SafeAreaView>
