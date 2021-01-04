@@ -10,7 +10,7 @@
 import React, {useEffect, useState} from 'react';
 import {SafeAreaView, StyleSheet, View, Text, StatusBar} from 'react-native';
 
-// import {Svg, Circle} from 'react-native-svg';
+import {Svg, Rect, Defs, Circle, Stop, LinearGradient} from 'react-native-svg';
 import Animated, {
   cond,
   call,
@@ -208,36 +208,198 @@ const App = () => {
       {/* <StatusBar hidden /> */}
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
-          <View
+          <Svg
+            height={AVAILABLE_HEIGHT + 10}
+            width={SIDE_BORDER_WIDTH}
             style={{
-              width: AVAILABLE_WIDTH,
-              height: SIDE_BORDER_WIDTH,
-              backgroundColor: COLORS.BORDER,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: 'absolute',
+              zIndex: 999,
+              left: -SIDE_BORDER_WIDTH,
             }}>
-            <View
-              style={{
-                width: AVAILABLE_WIDTH * 0.4,
-                height: SIDE_BORDER_WIDTH,
-                backgroundColor: COLORS.BACKGROUND,
-                marginRight: 2 * SIDE_BORDER_WIDTH,
-              }}
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect
+              x="0"
+              y="0"
+              width={SIDE_BORDER_WIDTH}
+              height={AVAILABLE_HEIGHT}
+              fill="url(#grad)"
             />
-          </View>
+          </Svg>
 
+          <Svg
+            height={AVAILABLE_HEIGHT + 10}
+            width={SIDE_BORDER_WIDTH}
+            style={{position: 'absolute', zIndex: 999, left: WIDTH}}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect
+              x="0"
+              y="0"
+              width={SIDE_BORDER_WIDTH}
+              height={AVAILABLE_HEIGHT}
+              fill="url(#grad)"
+            />
+          </Svg>
+
+          <Svg height="10" width={WIDTH}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+              <LinearGradient id="revGrad" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor="red" stopOpacity="1" />
+                <Stop offset="1" stopColor="#FFD080" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect
+              x="0"
+              y="0"
+              width={WIDTH * 0.3}
+              height="10"
+              fill="url(#grad)"
+            />
+            <Rect
+              x={WIDTH * 0.7}
+              y="0"
+              width={WIDTH * 0.3}
+              height="10"
+              fill="url(#revGrad)"
+            />
+          </Svg>
+
+          <Svg
+            height="10"
+            width={WIDTH}
+            style={{zIndex: 9999, position: 'absolute', top: HEIGHT + 10}}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor="red" stopOpacity="1" />
+                <Stop offset="1" stopColor="#FFD080" stopOpacity="1" />
+              </LinearGradient>
+              <LinearGradient id="revGrad" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+            <Rect
+              x="0"
+              y="0"
+              width={WIDTH * 0.3}
+              height="10"
+              fill="url(#grad)"
+            />
+            <Rect
+              x={WIDTH * 0.7}
+              y="0"
+              width={WIDTH * 0.3}
+              height="10"
+              fill="url(#revGrad)"
+            />
+          </Svg>
+
+          <Svg
+            height={WIDTH * 0.4}
+            width={WIDTH * 0.4}
+            style={{
+              position: 'absolute',
+              zIndex: -1,
+              left: WIDTH / 2 - WIDTH * 0.2,
+              top: HEIGHT / 2 - WIDTH * 0.2 - 4 + 10,
+            }}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+
+            <Circle
+              cx={WIDTH * 0.2}
+              cy={WIDTH * 0.2}
+              r={WIDTH * 0.2 - 4}
+              stroke="url(#grad)"
+              strokeWidth="4"
+            />
+          </Svg>
+
+          <Svg
+            height={WIDTH * 0.4}
+            width={WIDTH * 0.8}
+            style={{
+              position: 'absolute',
+              zIndex: -1,
+              left: WIDTH / 2 - WIDTH * 0.4,
+              // top: HEIGHT / 2 - 90,
+            }}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+
+            <Circle
+              cx={WIDTH * 0.4}
+              cy="0"
+              r={WIDTH * 0.2}
+              stroke="url(#grad)"
+              strokeWidth="4"
+            />
+          </Svg>
+          <Svg
+            height={WIDTH * 0.4}
+            width={WIDTH * 0.8}
+            style={{
+              position: 'absolute',
+              zIndex: -1,
+              left: WIDTH / 2 - WIDTH * 0.4,
+              top: HEIGHT - WIDTH * 0.4 + 20,
+            }}>
+            <Defs>
+              <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+                <Stop offset="1" stopColor="red" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+
+            <Circle
+              cx={WIDTH * 0.4}
+              cy={WIDTH * 0.4}
+              r={WIDTH * 0.2}
+              stroke="url(#grad)"
+              strokeWidth="4"
+            />
+          </Svg>
           <Animated.View
             style={{
               width: BALL_DIAMETER,
               height: BALL_DIAMETER,
               borderRadius: BALL_DIAMETER / 2,
+
               transform: [
                 {translateX: sub(_ballX, BALL_DIAMETER / 2)},
                 {translateY: sub(_ballY, BALL_DIAMETER / 2)},
               ],
-              backgroundColor: COLORS.BALL,
+              backgroundColor: COLORS.WHITE,
               zIndex: 9,
+              borderWidth: 2,
+
+              borderColor: COLORS.BALL,
+
+              shadowColor: COLORS.BALL,
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.8,
+              shadowRadius: 4,
             }}
           />
           <PanGestureHandler
@@ -259,7 +421,7 @@ const App = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderWidth: 4,
-                borderColor: COLORS.BLUE,
+                borderColor: COLORS.BALL,
               }}>
               <Text style={styles.boldWhite}>Player1</Text>
             </Animated.View>
@@ -287,13 +449,13 @@ const App = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderWidth: 4,
-                borderColor: COLORS.BLUE,
+                borderColor: COLORS.BALL,
               }}>
               <Text style={styles.boldWhite}>Player2</Text>
             </Animated.View>
           </PanGestureHandler>
 
-          <View
+          {/* <View
             style={{
               position: 'absolute',
               width: AVAILABLE_WIDTH,
@@ -312,7 +474,7 @@ const App = () => {
                 marginRight: 2 * SIDE_BORDER_WIDTH,
               }}
             />
-          </View>
+          </View> */}
 
           <View
             style={{
@@ -321,9 +483,9 @@ const App = () => {
               left: WIDTH - 50,
               height: 100,
               width: 50,
-              backgroundColor: COLORS.BORDER,
+              // backgroundColor: COLORS.BORDER,
               position: 'absolute',
-              opacity: 0.5,
+              // opacity: 0.5,
               display: 'flex',
             }}>
             <View
@@ -332,7 +494,7 @@ const App = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>
+              <Text style={{fontSize: 24, fontWeight: 'bold', color: 'red'}}>
                 {p1Score}
               </Text>
             </View>
@@ -345,7 +507,7 @@ const App = () => {
               }}>
               <Text
                 style={{
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: 'bold',
                   color: COLORS.PLAYER_2,
                 }}>
@@ -360,9 +522,9 @@ const App = () => {
               left: 0,
               height: 4,
               width: WIDTH,
-              backgroundColor: 'aqua',
+              backgroundColor: 'orange',
               position: 'absolute',
-              opacity: 0.5,
+              // opacity: 0.5,
             }}
           />
           {showGoalText && (
@@ -405,11 +567,12 @@ const styles = StyleSheet.create({
   },
 
   wrapperParentContainer: {
-    backgroundColor: '#ffe0fe',
+    backgroundColor: COLORS.BACKGROUND,
     width: AVAILABLE_WIDTH,
     height: AVAILABLE_HEIGHT,
     borderLeftWidth: SIDE_BORDER_WIDTH,
     borderRightWidth: SIDE_BORDER_WIDTH,
+
     borderColor: '#00FFFF',
   },
 
