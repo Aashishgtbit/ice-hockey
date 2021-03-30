@@ -247,13 +247,16 @@ export function handleVelocityOnCollision(
       cond(
         lessThan(ballPosition.x, playerPosition.transX),
         [multiply(-10, 60)],
-        cond(
-          greaterThan(
-            ballPosition.x,
-            add(playerPosition.transX, BALL_DIAMETER / 2),
+        [
+          cond(
+            greaterThan(
+              ballPosition.x,
+              add(playerPosition.transX, BALL_DIAMETER / 2),
+            ),
+            multiply(10, 60),
+            [velocity],
           ),
-          multiply(10, 60),
-        ),
+        ],
       ),
     ),
   );

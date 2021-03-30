@@ -42,6 +42,7 @@ import CustomModal from './src/components/CustomModal';
 import Result from './src/components/CustomModal/Result';
 
 const App = () => {
+  console.log(WIDTH, HEIGHT);
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
   const [showGoalText, setShowGoalText] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
