@@ -8,9 +8,11 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StyleSheet, View, Text, StatusBar} from 'react-native';
-
+import {SafeAreaView, StyleSheet, View, Text} from 'react-native';
 import {Svg, Rect, Defs, Circle, Stop, LinearGradient} from 'react-native-svg';
+import {Constants} from 'react-native-unimodules';
+console.log(Constants.systemFonts);
+
 import Animated, {
   cond,
   call,
@@ -40,9 +42,37 @@ import {
 } from './src/utils/Constants/appConstants';
 import CustomModal from './src/components/CustomModal';
 import Result from './src/components/CustomModal/Result';
-
+import {Audio} from 'expo-av';
+// import {asset} from 'expo-asset';
 const App = () => {
   console.log(WIDTH, HEIGHT);
+  const [sound, setSound] = useState();
+
+  async function playSound() {
+    console.log('Playing Sound');
+    await sound.replayAsync();
+  }
+  const loadSound = async () => {
+    console.log('Loading Sound');
+    const {sound} = await Audio.Sound.createAsync(
+      require('./src/assets/bathitball.wav'),
+    );
+    setSound(sound);
+  };
+
+  useEffect(() => {
+    loadSound();
+  }, []);
+
+  React.useEffect(() => {
+    return sound
+      ? () => {
+          console.log('Unloading Sound');
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
+
   const [scores, setPlayerScores] = useState({p1: 0, p2: 0});
   const [showGoalText, setShowGoalText] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -114,6 +144,7 @@ const App = () => {
     offsetX1,
     AXIS.X,
     PLAYER.PLAYER1,
+    playSound,
   );
 
   const translateX1 = p1[0];
@@ -124,6 +155,7 @@ const App = () => {
     offsetY1,
     AXIS.Y,
     PLAYER.PLAYER1,
+    playSound,
   )[0];
 
   const translateX2 = interaction(
@@ -132,6 +164,7 @@ const App = () => {
     offsetX2,
     AXIS.X,
     PLAYER.PLAYER2,
+    playSound,
   )[0];
 
   const translateY2 = interaction(
@@ -140,6 +173,7 @@ const App = () => {
     offsetY2,
     AXIS.Y,
     PLAYER.PLAYER2,
+    playSound,
   )[0];
 
   // player 1
@@ -160,6 +194,7 @@ const App = () => {
     player1Position,
     player2Position,
     AXIS.X,
+    playSound,
   );
   const _ballY = handleBallInteraction(
     gestureState1,
@@ -169,6 +204,7 @@ const App = () => {
     player1Position,
     player2Position,
     AXIS.Y,
+    playSound,
   );
   useCode(
     () =>
@@ -177,6 +213,7 @@ const App = () => {
         call([], () => {
           const b = scores;
           b.p2 = b.p2 + 1;
+          playSound();
           setPlayerScores({...b});
         }),
         cond(
@@ -184,6 +221,7 @@ const App = () => {
           call([], () => {
             const b = scores;
             b.p1 = b.p1 + 1;
+            playSound();
             setPlayerScores({...b});
           }),
         ),
@@ -195,6 +233,7 @@ const App = () => {
       if (scores.p2 >= PENULTIMATE_SCORE || scores.p1 >= PENULTIMATE_SCORE) {
         setShowResultModal(true);
       } else {
+        // playSound();
         setShowGoalText(true);
         setTimeout(() => {
           setShowGoalText(false);
@@ -209,6 +248,7 @@ const App = () => {
       {/* <StatusBar hidden /> */}
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
+          {/* <Button title="Play" onPress={playSound} /> */}
           <Svg
             height={AVAILABLE_HEIGHT + 10}
             width={SIDE_BORDER_WIDTH}

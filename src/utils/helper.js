@@ -19,6 +19,7 @@ import Animated, {
   block,
   and,
   Value,
+  call,
 } from 'react-native-reanimated';
 import {State} from 'react-native-gesture-handler';
 import {
@@ -41,6 +42,7 @@ export const handleBallInteraction = (
   player1Position,
   player2Position,
   axis,
+  playSound,
 ) => {
   const position = axis === AXIS.X ? ballTrans.x : ballTrans.y;
   const velocity = new Value(0);
@@ -120,6 +122,7 @@ export const handleBallInteraction = (
                 velocity,
                 dt,
                 ballTrans,
+                playSound,
               ),
               damping(dt, velocity),
               set(position, add(position, multiply(velocity, dt))),
@@ -148,6 +151,7 @@ export const handleBallInteraction = (
                   velocity,
                   dt,
                   ballTrans,
+                  playSound,
                 ),
                 damping(dt, velocity),
                 set(position, add(position, multiply(velocity, dt))),
@@ -187,6 +191,7 @@ export const handleBallInteraction = (
             velocity,
             dt,
             ballTrans,
+            playSound,
           ),
           set(position, add(position, multiply(velocity, dt))),
         ],
@@ -269,6 +274,7 @@ export function handleBoundaryReflection(
   velocity,
   dt,
   ballTrans,
+  playSound,
 ) {
   const ballX = ballTrans.x;
   const ballY = ballTrans.y;
@@ -297,10 +303,10 @@ export function handleBoundaryReflection(
               [
                 cond(
                   lessThan(ballX, itemDiameter / 2),
-                  [multiply(-1, velocity)],
+                  [call([], playSound), multiply(-1, velocity)],
                   cond(
                     greaterThan(ballX, WIDTH - itemDiameter / 2),
-                    [multiply(-1, velocity)],
+                    [call([], playSound), multiply(-1, velocity)],
                     velocity,
                   ),
                 ),
@@ -308,10 +314,10 @@ export function handleBoundaryReflection(
               [
                 cond(
                   lessThan(ballY, itemDiameter / 2),
-                  [multiply(-1, velocity)],
+                  [call([], playSound), multiply(-1, velocity)],
                   cond(
                     greaterThan(ballY, HEIGHT - itemDiameter / 2),
-                    [multiply(-1, velocity)],
+                    [call([], playSound), multiply(-1, velocity)],
                     velocity,
                   ),
                 ),
@@ -340,6 +346,7 @@ export function interaction(
   initialOffset,
   axis,
   currentActivePlayer,
+  playsound,
 ) {
   const start = new Value(0);
   const dragging = new Value(0);
