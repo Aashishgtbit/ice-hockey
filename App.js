@@ -55,7 +55,7 @@ const App = () => {
   const loadSound = async () => {
     console.log('Loading Sound');
     const {sound} = await Audio.Sound.createAsync(
-      require('./src/assets/bathitball.wav'),
+      require('./src/assets/pingPongBall.mp3'),
     );
     setSound(sound);
   };
