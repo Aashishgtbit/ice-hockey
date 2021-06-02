@@ -1,5 +1,5 @@
-import React, {useEffect, useMemo} from 'react';
-import Animated, {useValue, Easing} from 'react-native-reanimated';
+import React from 'react';
+import Animated, {EasingNode} from 'react-native-reanimated';
 import {View, Text, StyleSheet, Dimensions} from 'react-native';
 const {
   set,
@@ -28,7 +28,7 @@ function runTiming(clock, value, dest) {
   const config = {
     duration: 1000,
     toValue: new Value(0),
-    easing: Easing.inOut(Easing.quad),
+    easing: EasingNode.inOut(EasingNode.quad),
   };
 
   return block([
@@ -62,6 +62,7 @@ function AnimatedGoal() {
           },
         ]}>
         <Text
+          // eslint-disable-next-line react-native/no-inline-styles
           style={{
             fontSize: 80,
             fontWeight: 'bold',
