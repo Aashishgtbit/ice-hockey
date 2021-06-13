@@ -10,10 +10,19 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-native-fontawesome": "^0.2.6",
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/native": "^5.9.4",
+    "@react-navigation/stack": "^5.14.5",
+    "d3-shape": "^3.0.1",
     "react": "16.13.1",
     "react-native": "0.63.2",
-    "react-native-gesture-handler": "^1.8.0",
-    "react-native-reanimated": "^2.0.0",
+    "react-native-gesture-handler": "^1.10.3",
+    "react-native-reanimated": "^2.2.0",
+    "react-native-safe-area-context": "^3.2.0",
+    "react-native-screens": "^3.3.0",
     "react-native-svg": "^12.1.0"
   },
   "devDependencies": {
