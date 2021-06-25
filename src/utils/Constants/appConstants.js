@@ -28,6 +28,8 @@ export const AXIS = {
   Y: 'Y',
 };
 
+export const MAX_ALLOWED_VELOCITY = 900;
+
 export const COLORS = {
   BORDER: '#00FFFF',
   BACKGROUND: '#000',

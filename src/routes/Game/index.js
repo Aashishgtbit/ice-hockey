@@ -16,7 +16,6 @@ import Animated, {
   useAnimatedGestureHandler,
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   useDerivedValue,
 } from 'react-native-reanimated';
 import {PanGestureHandler} from 'react-native-gesture-handler';
@@ -31,36 +30,34 @@ import {
   FINAL_DIAMETER,
   COLORS,
   height,
+  AXIS,
 } from '../../utils/Constants/appConstants';
 import {Boundary} from '../../components/Boundary';
+import {
+  cancelAnimation,
+  defineAnimation,
+} from 'react-native-reanimated/src/reanimated2/animations';
+import {withReflection} from '../../utils/customAnimations/withReflection';
+import {getBallVelocity} from '../../utils/customAnimations/getBallVelocity';
 const Game = () => {
-  // console.log(
-  //   'WIDTH:',
-  //   WIDTH,
-  //   'HEIGHT:',
-  //   HEIGHT,
-  //   'AVAILABLE_WIDTH:',
-  //   AVAILABLE_WIDTH,
-  //   'AVAILABLE_HEIGHT :',
-  //   AVAILABLE_HEIGHT,
-  //   'FINAL_DIAMETER:',
-  //   FINAL_DIAMETER,
-  //   'BALL_DIAMETER:',
-  //   BALL_DIAMETER,
-  // );
-
+  console.log('MaxHeight', HEIGHT - SIDE_BORDER_WIDTH);
+  console.log('MaxWidth :', WIDTH - SIDE_BORDER_WIDTH);
   // player 1
   const dragX1 = useSharedValue(WIDTH / 2);
   const dragY1 = useSharedValue(HEIGHT / 4);
   const velocityX1 = useSharedValue(0);
   const velocityY1 = useSharedValue(0);
+  const isP1Dragging = useSharedValue(false);
   // player2
   const dragX2 = useSharedValue(WIDTH / 2);
   const dragY2 = useSharedValue(HEIGHT * 0.75);
 
   //ball
-  const ballX = useSharedValue(WIDTH / 2);
-  const ballY = useSharedValue(HEIGHT / 2 + BALL_DIAMETER / 4);
+  const ballX = useDerivedValue(() => WIDTH / 2);
+  const ballY = useDerivedValue(() => HEIGHT / 2 + BALL_DIAMETER / 4);
+  const ballVx = useSharedValue(0);
+  const ballVy = useSharedValue(0);
+
   const isBallCollided = useDerivedValue(() => {
     const distanceBetweenCentresP1 = Math.sqrt(
       (dragX1.value - ballX.value) * (dragX1.value - ballX.value) +
@@ -72,13 +69,37 @@ const Game = () => {
     );
     const criticalDistance = (FINAL_DIAMETER + BALL_DIAMETER) / 2;
     if (
-      distanceBetweenCentresP1 <= criticalDistance ||
-      distanceBetweenCentresP2 <= criticalDistance
+      distanceBetweenCentresP1 <= criticalDistance
+      // ||
+      // distanceBetweenCentresP2 <= criticalDistance
     ) {
-      console.log('ball collided');
       return true;
     }
     return false;
+  });
+
+  useDerivedValue(() => {
+    if (isBallCollided.value) {
+      ballX.value = withReflection({
+        velocity: isP1Dragging.value ? velocityX1.value * 5 : ballVx.value,
+        clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
+      });
+
+      ballY.value = withReflection({
+        velocity: isP1Dragging.value ? velocityY1.value * 5 : ballVy.value,
+        clamp: [SIDE_BORDER_WIDTH, AVAILABLE_HEIGHT - SIDE_BORDER_WIDTH],
+      });
+
+      ballVx.value = getBallVelocity({
+        velocity: velocityX1.value * 2,
+        clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
+      });
+
+      ballVy.value = getBallVelocity({
+        velocity: velocityY1.value * 2,
+        clamp: [SIDE_BORDER_WIDTH, AVAILABLE_HEIGHT - SIDE_BORDER_WIDTH],
+      });
+    }
   });
 
   const onGestureEvent1 = useAnimatedGestureHandler({
@@ -91,6 +112,10 @@ const Game = () => {
       dragY1.value = ctx.startY + event.translationY;
       velocityX1.value = event.velocityX;
       velocityY1.value = event.velocityY;
+      isP1Dragging.value = true;
+    },
+    onEnd: (event, ctx) => {
+      isP1Dragging.value = false;
     },
   });
   const onGestureEvent2 = useAnimatedGestureHandler({
