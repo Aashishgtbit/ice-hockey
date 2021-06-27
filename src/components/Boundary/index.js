@@ -53,6 +53,23 @@ export function Boundary() {
           fill="url(#grad)"
         />
       </Svg>
+      <Svg
+        height={4}
+        width={WIDTH}
+        style={{
+          position: 'absolute',
+          zIndex: 999,
+          left: 0,
+          top: HEIGHT / 2 + 5,
+        }}>
+        <Defs>
+          <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
+            <Stop offset="1" stopColor="red" stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width={WIDTH} height={4} fill="url(#grad)" />
+      </Svg>
 
       <Svg height="10" width={WIDTH}>
         <Defs>
