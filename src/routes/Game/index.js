@@ -39,8 +39,6 @@ import Result from '../../components/CustomModal/Result';
 import AnimatedGoal from '../../components/CustomModal/AnimatedGoal';
 
 const Game = () => {
-  console.log('MaxHeight', HEIGHT - SIDE_BORDER_WIDTH);
-  console.log('MaxWidth :', WIDTH - SIDE_BORDER_WIDTH);
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [showResult, setShowResultModal] = useState(false);

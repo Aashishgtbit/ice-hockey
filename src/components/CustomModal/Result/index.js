@@ -5,7 +5,7 @@ import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {
   AVAILABLE_HEIGHT,
   AVAILABLE_WIDTH,
-} from '../../utils/Constants/appConstants';
+} from '../../../utils/Constants/appConstants';
 
 const Result = (props) => {
   return (
