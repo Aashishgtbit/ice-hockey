@@ -7,7 +7,7 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {SafeAreaView, StyleSheet, View, Text} from 'react-native';
 
 import Animated, {
@@ -34,12 +34,33 @@ import {withReflection} from '../../utils/customAnimations/withReflection';
 import {getBallVelocity} from '../../utils/customAnimations/getBallVelocity';
 import {handleBoundaryCondition} from '../../utils/helper2';
 import ScoreBoard from '../../components/ScoreBoard';
-import {useState} from 'react';
+import CustomModal from '../../components/CustomModal';
+import Result from '../../components/CustomModal/Result';
+import AnimatedGoal from '../../components/CustomModal/AnimatedGoal';
+
 const Game = () => {
   console.log('MaxHeight', HEIGHT - SIDE_BORDER_WIDTH);
   console.log('MaxWidth :', WIDTH - SIDE_BORDER_WIDTH);
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
+  const [showResult, setShowResultModal] = useState(false);
+  const [showGoal, setShowGoal] = useState(false);
+
+  useEffect(() => {
+    if (p1Score === 7 || p2Score === 7) {
+      setShowResultModal(true);
+    }
+  }, [p1Score, p2Score]);
+
+  const handleResultModalClose = useCallback(() => {
+    setShowResultModal(false);
+    setP1Score(0);
+    setP2Score(0);
+  }, []);
+
+  const handleShowGoal = useCallback(() => {
+    setShowGoal(false);
+  }, []);
 
   const incrementGoal = (player) => {
     if (player === 'Player1') {
@@ -47,6 +68,7 @@ const Game = () => {
     } else {
       setP2Score(p2Score + 1);
     }
+    setShowGoal(true);
   };
   // player 1
   const dragX1 = useSharedValue(WIDTH / 2);
@@ -91,7 +113,14 @@ const Game = () => {
       return false;
     }
     return true;
-  });
+  }, [
+    dragX1.value,
+    dragX2.value,
+    dragY1.value,
+    dragY2.value,
+    ballX.value,
+    ballY.value,
+  ]);
 
   useDerivedValue(() => {
     if (isBallCollided.value) {
@@ -145,7 +174,7 @@ const Game = () => {
         });
       }
     }
-  });
+  }, [isBallCollided.value]);
 
   const resetBallParameters = () => {
     'worklet';
@@ -205,6 +234,17 @@ const Game = () => {
     },
   });
 
+  useDerivedValue(() => {
+    const {playerX, playerY} = handleBoundaryCondition(
+      dragX2.value,
+      dragY2.value,
+      HEIGHT / 2 + FINAL_DIAMETER / 2,
+      HEIGHT,
+    );
+    dragX2.value = playerX;
+    dragY2.value = playerY;
+  }, [dragX2.value, dragY2.value]);
+
   const player1Style = useAnimatedStyle(() => {
     const {playerX, playerY} = handleBoundaryCondition(
       dragX1.value,
@@ -214,6 +254,7 @@ const Game = () => {
     );
     dragX1.value = playerX;
     dragY1.value = playerY;
+
     return {
       width: FINAL_DIAMETER,
       height: FINAL_DIAMETER,
@@ -235,7 +276,7 @@ const Game = () => {
         },
       ],
     };
-  });
+  }, [dragX1.value, dragY1.value]);
   const player2Style = useAnimatedStyle(() => {
     const {playerX, playerY} = handleBoundaryCondition(
       dragX2.value,
@@ -267,7 +308,7 @@ const Game = () => {
         },
       ],
     };
-  });
+  }, [dragX2.value, dragY2.value]);
 
   const ballStyle = useAnimatedStyle(() => {
     return {
@@ -282,15 +323,13 @@ const Game = () => {
       ],
       backgroundColor: COLORS.WHITE,
       borderWidth: 2,
-
       borderColor: COLORS.BALL,
-
       shadowColor: COLORS.BALL,
       shadowOffset: {width: 0, height: 2},
       shadowOpacity: 0.8,
       shadowRadius: 4,
     };
-  });
+  }, [ballX.value, ballY.value]);
 
   return (
     <>
@@ -322,6 +361,19 @@ const Game = () => {
             }}>
             <ScoreBoard scores={{p1: p1Score, p2: p2Score}} />
           </View>
+
+          <CustomModal isOpen={showGoal}>
+            <AnimatedGoal handleModalClose={handleShowGoal} />
+          </CustomModal>
+
+          <CustomModal
+            isOpen={showResult}
+            handleModalClose={handleResultModalClose}>
+            <Result
+              handleModalClose={handleResultModalClose}
+              winnerText={p1Score > p2Score ? 'Player1 wins' : 'Player2 wins'}
+            />
+          </CustomModal>
         </View>
       </SafeAreaView>
     </>
