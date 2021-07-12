@@ -18,7 +18,7 @@ export const RADIUS = 40;
 export const STROKE_WIDTH = 2.5;
 export const FINAL_RADIUS = RADIUS + STROKE_WIDTH;
 export const FINAL_DIAMETER = 2 * (RADIUS + STROKE_WIDTH);
-export const PENULTIMATE_SCORE = 7;
+export const PENULTIMATE_SCORE = 1;
 
 export const BALL_DIAMETER = (3 * RADIUS) / 4;
 export const PLAYER = {PLAYER1: 'PLAYER1', PLAYER2: 'PLAYER2'};

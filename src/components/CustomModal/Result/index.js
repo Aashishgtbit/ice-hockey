@@ -2,10 +2,7 @@
 
 import React from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
-import {
-  AVAILABLE_HEIGHT,
-  AVAILABLE_WIDTH,
-} from '../../../utils/Constants/appConstants';
+import {AVAILABLE_WIDTH} from '../../../utils/Constants/appConstants';
 
 const Result = (props) => {
   return (
@@ -36,17 +33,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resultContainer: {
-    height: AVAILABLE_HEIGHT / 2,
-    width: AVAILABLE_WIDTH - 40,
+    height: 200,
+    width: AVAILABLE_WIDTH - 80,
     backgroundColor: '#fff',
-    borderRadius: 40,
+    borderRadius: 20,
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   button: {
     marginTop: 20,
-    // alignItems: 'center',
     backgroundColor: '#DDDDDD',
     padding: 10,
 

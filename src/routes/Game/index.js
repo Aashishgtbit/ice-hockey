@@ -28,6 +28,7 @@ import {
   BALL_DIAMETER,
   FINAL_DIAMETER,
   COLORS,
+  PENULTIMATE_SCORE,
 } from '../../utils/Constants/appConstants';
 import {Boundary} from '../../components/Boundary';
 import {withReflection} from '../../utils/customAnimations/withReflection';
@@ -45,7 +46,7 @@ const Game = () => {
   const [showGoal, setShowGoal] = useState(false);
 
   useEffect(() => {
-    if (p1Score === 7 || p2Score === 7) {
+    if (p1Score === PENULTIMATE_SCORE || p2Score === PENULTIMATE_SCORE) {
       setShowResultModal(true);
     }
   }, [p1Score, p2Score]);
@@ -254,17 +255,6 @@ const Game = () => {
     dragY1.value = playerY;
 
     return {
-      width: FINAL_DIAMETER,
-      height: FINAL_DIAMETER,
-      borderRadius: FINAL_DIAMETER / 2,
-      backgroundColor: COLORS.PLAYER_1,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 4,
-      borderColor: COLORS.BALL,
-      position: 'absolute',
-      zIndex: 99999,
       transform: [
         {
           translateY: dragY1.value - FINAL_DIAMETER / 2,
@@ -286,17 +276,6 @@ const Game = () => {
     dragY2.value = playerY;
 
     return {
-      width: FINAL_DIAMETER,
-      height: FINAL_DIAMETER,
-      borderRadius: FINAL_DIAMETER / 2,
-      backgroundColor: COLORS.PLAYER_2,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 4,
-      borderColor: COLORS.BALL,
-      position: 'absolute',
-      zIndex: 99999,
       transform: [
         {
           translateY: dragY2.value - FINAL_DIAMETER / 2,
@@ -310,22 +289,10 @@ const Game = () => {
 
   const ballStyle = useAnimatedStyle(() => {
     return {
-      width: BALL_DIAMETER,
-      height: BALL_DIAMETER,
-      borderRadius: BALL_DIAMETER / 2,
-      position: 'absolute',
-      zIndex: 99999,
       transform: [
         {translateX: ballX.value - BALL_DIAMETER / 2},
         {translateY: ballY.value - BALL_DIAMETER / 2},
       ],
-      backgroundColor: COLORS.WHITE,
-      borderWidth: 2,
-      borderColor: COLORS.BALL,
-      shadowColor: COLORS.BALL,
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.8,
-      shadowRadius: 4,
     };
   }, [ballX.value, ballY.value]);
 
@@ -334,14 +301,14 @@ const Game = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
           <Boundary />
-          <Animated.View style={ballStyle} />
+          <Animated.View style={[styles.ball, ballStyle]} />
           <PanGestureHandler onGestureEvent={onGestureEvent1}>
-            <Animated.View style={player1Style}>
+            <Animated.View style={[styles.player1, player1Style]}>
               <Text style={styles.boldWhite}>Player1</Text>
             </Animated.View>
           </PanGestureHandler>
           <PanGestureHandler onGestureEvent={onGestureEvent2}>
-            <Animated.View style={player2Style}>
+            <Animated.View style={[styles.player2, player2Style]}>
               <Text style={styles.boldWhite}>Player2</Text>
             </Animated.View>
           </PanGestureHandler>
@@ -406,6 +373,47 @@ const styles = StyleSheet.create({
   boldWhite: {
     fontWeight: 'bold',
     color: '#fff',
+  },
+  player1: {
+    width: FINAL_DIAMETER,
+    height: FINAL_DIAMETER,
+    borderRadius: FINAL_DIAMETER / 2,
+    backgroundColor: COLORS.PLAYER_1,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: COLORS.BALL,
+    position: 'absolute',
+    zIndex: 99999,
+  },
+  player2: {
+    width: FINAL_DIAMETER,
+    height: FINAL_DIAMETER,
+    borderRadius: FINAL_DIAMETER / 2,
+    backgroundColor: COLORS.PLAYER_2,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: COLORS.BALL,
+    position: 'absolute',
+    zIndex: 99999,
+  },
+  ball: {
+    width: BALL_DIAMETER,
+    height: BALL_DIAMETER,
+    borderRadius: BALL_DIAMETER / 2,
+    position: 'absolute',
+    zIndex: 99999,
+
+    backgroundColor: COLORS.WHITE,
+    borderWidth: 2,
+    borderColor: COLORS.BALL,
+    shadowColor: COLORS.BALL,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
   },
 });
 
