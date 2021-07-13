@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {useEffect} from 'react/cjs/react.development';
-import {HEIGHT, WIDTH} from '../../../utils/Constants/appConstants';
+import {HEIGHT, WIDTH} from '../../utils/Constants/appConstants';
 const timingConfig = {
   duration: 1000,
 };
@@ -47,6 +47,8 @@ const styles = StyleSheet.create({
     width: WIDTH,
     height: HEIGHT,
     marginTop: 20,
+    position: 'absolute',
+    zIndex: 999999,
     justifyContent: 'center',
     alignItems: 'center',
   },

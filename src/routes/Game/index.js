@@ -37,7 +37,7 @@ import {handleBoundaryCondition} from '../../utils/helper2';
 import ScoreBoard from '../../components/ScoreBoard';
 import CustomModal from '../../components/CustomModal';
 import Result from '../../components/CustomModal/Result';
-import AnimatedGoal from '../../components/CustomModal/AnimatedGoal';
+import AnimatedGoal from '../../components/AnimatedGoal';
 
 const Game = () => {
   const [p1Score, setP1Score] = useState(0);
@@ -327,9 +327,9 @@ const Game = () => {
             <ScoreBoard scores={{p1: p1Score, p2: p2Score}} />
           </View>
 
-          <CustomModal isOpen={showGoal}>
-            <AnimatedGoal handleModalClose={handleShowGoal} />
-          </CustomModal>
+          {/* <CustomModal isOpen={showGoal}> */}
+          {showGoal && <AnimatedGoal handleModalClose={handleShowGoal} />}
+          {/* </CustomModal> */}
 
           <CustomModal
             isOpen={showResult}
