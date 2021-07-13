@@ -327,9 +327,7 @@ const Game = () => {
             <ScoreBoard scores={{p1: p1Score, p2: p2Score}} />
           </View>
 
-          {/* <CustomModal isOpen={showGoal}> */}
           {showGoal && <AnimatedGoal handleModalClose={handleShowGoal} />}
-          {/* </CustomModal> */}
 
           <CustomModal
             isOpen={showResult}
