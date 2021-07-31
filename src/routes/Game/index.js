@@ -8,7 +8,14 @@
  */
 
 import React, {useState, useCallback, useEffect} from 'react';
-import {SafeAreaView, StyleSheet, View, Text} from 'react-native';
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Text,
+  ToastAndroid,
+  Platform,
+} from 'react-native';
 
 import Animated, {
   useAnimatedGestureHandler,
@@ -39,11 +46,18 @@ import CustomModal from '../../components/CustomModal';
 import Result from '../../components/CustomModal/Result';
 import AnimatedGoal from '../../components/AnimatedGoal';
 
+import io from 'socket.io-client';
+
+const socket = io('http://192.168.0.101:8001');
+
 const Game = () => {
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [showResult, setShowResultModal] = useState(false);
   const [showGoal, setShowGoal] = useState(false);
+  // const [currentUser, setCurrentUser] = useState('');
+  const [connectedUser, setConnectedUser] = useState([]);
+  const currentUser = useSharedValue('');
 
   useEffect(() => {
     if (p1Score === PENULTIMATE_SCORE || p2Score === PENULTIMATE_SCORE) {
@@ -69,6 +83,7 @@ const Game = () => {
     }
     setShowGoal(true);
   };
+
   // player 1
   const dragX1 = useSharedValue(WIDTH / 2);
   const dragY1 = useSharedValue(HEIGHT / 4);
@@ -84,10 +99,60 @@ const Game = () => {
   const isP2Dragging = useSharedValue(false);
   const isBall2Collided = useSharedValue(false);
   //ball
-  const ballX = useDerivedValue(() => WIDTH / 2);
-  const ballY = useDerivedValue(() => HEIGHT / 2 + BALL_DIAMETER / 4);
+  const ballX = useSharedValue(WIDTH / 2);
+  const ballY = useSharedValue(HEIGHT / 2 + BALL_DIAMETER / 4);
   const ballVx = useSharedValue(0);
   const ballVy = useSharedValue(0);
+
+  useEffect(() => {
+    socket.emit('joinRoom', {
+      username: 'Aashish',
+      roomname: 'IceHockey',
+      screenDimension: {width: WIDTH, height: HEIGHT},
+    });
+    socket.on('message', (data) => {
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(data.text, ToastAndroid.LONG);
+      }
+    });
+
+    socket.on('getUsers', (data) => {
+      setConnectedUser(data);
+    });
+    socket.on('positionChangeBall', (data) => {
+      if (
+        (currentUser.value === 'Player1' &&
+          data.lastUserCollided === 'Player2') ||
+        (currentUser.value === 'Player2' && data.lastUserCollided === 'Player1')
+      ) {
+        console.log('received BallPositionData : ', data);
+        console.log('currentUser : ', currentUser);
+        ballX.value = data.x;
+        ballY.value = data.y;
+        ballVx.value = data.Vx;
+        ballVy.value = data.Vy;
+      }
+    });
+    return () => socket.disconnect();
+  }, [
+    dragX1,
+    dragY1,
+    dragX2,
+    dragY2,
+    isP1Dragging,
+    isP2Dragging,
+    ballX,
+    ballY,
+    currentUser,
+    ballVx,
+    ballVy,
+  ]);
+
+  const updateBallCollidedData = (user) => {
+    socket.emit('ballCollided', {
+      currentUser: user,
+    });
+  };
 
   const isBallCollided = useDerivedValue(() => {
     const distanceBetweenCentresP1 = Math.sqrt(
@@ -103,9 +168,11 @@ const Game = () => {
     if (distanceBetweenCentresP1 <= criticalDistance) {
       isBall1Collided.value = true;
       isBall2Collided.value = false;
+      runOnJS(updateBallCollidedData)('Player1');
     } else if (distanceBetweenCentresP2 <= criticalDistance) {
       isBall1Collided.value = false;
       isBall2Collided.value = true;
+      runOnJS(updateBallCollidedData)('Player2');
     } else {
       isBall1Collided.value = false;
       isBall2Collided.value = false;
@@ -120,6 +187,13 @@ const Game = () => {
     ballX.value,
     ballY.value,
   ]);
+
+  socket.on('joinMessage', (data) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.text, ToastAndroid.LONG);
+    }
+    currentUser.value = data.currentUser;
+  });
 
   useDerivedValue(() => {
     if (isBallCollided.value) {
@@ -207,6 +281,7 @@ const Game = () => {
     },
     onActive: (event, ctx) => {
       dragX1.value = ctx.startX + event.translationX;
+
       dragY1.value = ctx.startY + event.translationY;
       velocityX1.value = event.velocityX;
       velocityY1.value = event.velocityY;
@@ -233,18 +308,44 @@ const Game = () => {
     },
   });
 
-  useDerivedValue(() => {
-    const {playerX, playerY} = handleBoundaryCondition(
-      dragX2.value,
-      dragY2.value,
-      HEIGHT / 2 + FINAL_DIAMETER / 2,
-      HEIGHT,
-    );
-    dragX2.value = playerX;
-    dragY2.value = playerY;
-  }, [dragX2.value, dragY2.value]);
+  socket.on('positionChangeP1', (pos) => {
+    dragX1.value = pos.x;
+    dragY1.value = pos.y;
+    isP1Dragging.value = true;
+  });
+  socket.on('positionChangeP2', (pos) => {
+    dragX2.value = pos.x;
+    dragY2.value = pos.y;
+    isP2Dragging.value = true;
+  });
+
+  const sendPlayer1DataToSocket = ({x, y}) => {
+    if (currentUser.value === 'Player1') {
+      socket.emit('positionChangeP1', {x, y});
+    }
+  };
+  const sendPlayer2DataToSocket = ({x, y}) => {
+    if (currentUser.value === 'Player2') {
+      socket.emit('positionChangeP2', {x, y});
+    }
+  };
+  const sendBallDataToSocket = ({x, y, Vx, Vy}) => {
+    socket.emit('positionChangeBall', {x, y, Vx, Vy});
+  };
+
+  // useDerivedValue(() => {
+  //   const {playerX, playerY} = handleBoundaryCondition(
+  //     dragX2.value,
+  //     dragY2.value,
+  //     HEIGHT / 2 + FINAL_DIAMETER / 2,
+  //     HEIGHT,
+  //   );
+  //   dragX2.value = playerX;
+  //   dragY2.value = playerY;
+  // }, [dragX2.value, dragY2.value]);
 
   const player1Style = useAnimatedStyle(() => {
+    runOnJS(sendPlayer1DataToSocket)({x: dragX1.value, y: dragY1.value});
     const {playerX, playerY} = handleBoundaryCondition(
       dragX1.value,
       dragY1.value,
@@ -266,6 +367,7 @@ const Game = () => {
     };
   }, [dragX1.value, dragY1.value]);
   const player2Style = useAnimatedStyle(() => {
+    runOnJS(sendPlayer2DataToSocket)({x: dragX2.value, y: dragY2.value});
     const {playerX, playerY} = handleBoundaryCondition(
       dragX2.value,
       dragY2.value,
@@ -288,6 +390,12 @@ const Game = () => {
   }, [dragX2.value, dragY2.value]);
 
   const ballStyle = useAnimatedStyle(() => {
+    runOnJS(sendBallDataToSocket)({
+      x: ballX.value,
+      y: ballY.value,
+      Vx: ballVx.value,
+      Vy: ballVy.value,
+    });
     return {
       transform: [
         {translateX: ballX.value - BALL_DIAMETER / 2},
@@ -302,16 +410,29 @@ const Game = () => {
         <View style={styles.wrapperParentContainer}>
           <Boundary />
           <Animated.View style={[styles.ball, ballStyle]} />
-          <PanGestureHandler onGestureEvent={onGestureEvent1}>
+          {currentUser.value === 'Player1' || connectedUser.length === 0 ? (
+            <PanGestureHandler onGestureEvent={onGestureEvent1}>
+              <Animated.View style={[styles.player1, player1Style]}>
+                <Text style={styles.boldWhite}>Player1</Text>
+              </Animated.View>
+            </PanGestureHandler>
+          ) : (
             <Animated.View style={[styles.player1, player1Style]}>
               <Text style={styles.boldWhite}>Player1</Text>
             </Animated.View>
-          </PanGestureHandler>
-          <PanGestureHandler onGestureEvent={onGestureEvent2}>
+          )}
+
+          {currentUser.value === 'Player2' || connectedUser.length === 0 ? (
+            <PanGestureHandler onGestureEvent={onGestureEvent2}>
+              <Animated.View style={[styles.player2, player2Style]}>
+                <Text style={styles.boldWhite}>Player2</Text>
+              </Animated.View>
+            </PanGestureHandler>
+          ) : (
             <Animated.View style={[styles.player2, player2Style]}>
               <Text style={styles.boldWhite}>Player2</Text>
             </Animated.View>
-          </PanGestureHandler>
+          )}
           <View
             style={{
               transform: [
@@ -326,9 +447,7 @@ const Game = () => {
             }}>
             <ScoreBoard scores={{p1: p1Score, p2: p2Score}} />
           </View>
-
           {showGoal && <AnimatedGoal handleModalClose={handleShowGoal} />}
-
           <CustomModal
             isOpen={showResult}
             handleModalClose={handleResultModalClose}>
