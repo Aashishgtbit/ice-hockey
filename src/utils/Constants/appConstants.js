@@ -41,3 +41,6 @@ export const COLORS = {
   RED: '#f00',
   ORANGE: '#FFA500',
 };
+
+export const PLAYER_MASS = 3;
+export const Ball_MASS = 1;

@@ -39,7 +39,6 @@ import {
 } from '../../utils/Constants/appConstants';
 import {Boundary} from '../../components/Boundary';
 import {withReflection} from '../../utils/customAnimations/withReflection';
-import {getBallVelocity} from '../../utils/customAnimations/getBallVelocity';
 import {handleBoundaryCondition} from '../../utils/helper2';
 import ScoreBoard from '../../components/ScoreBoard';
 import CustomModal from '../../components/CustomModal';
@@ -48,14 +47,14 @@ import AnimatedGoal from '../../components/AnimatedGoal';
 
 import io from 'socket.io-client';
 
-const socket = io('http://192.168.0.101:8001');
+const socket = io('http://192.168.0.103:8001');
 
 const Game = () => {
   const [p1Score, setP1Score] = useState(0);
   const [p2Score, setP2Score] = useState(0);
   const [showResult, setShowResultModal] = useState(false);
   const [showGoal, setShowGoal] = useState(false);
-  // const [currentUser, setCurrentUser] = useState('');
+
   const [connectedUser, setConnectedUser] = useState([]);
   const currentUser = useSharedValue('');
 
@@ -166,10 +165,12 @@ const Game = () => {
     const criticalDistance = (FINAL_DIAMETER + BALL_DIAMETER) / 2;
 
     if (distanceBetweenCentresP1 <= criticalDistance) {
+      console.log('collided with p1');
       isBall1Collided.value = true;
       isBall2Collided.value = false;
       runOnJS(updateBallCollidedData)('Player1');
     } else if (distanceBetweenCentresP2 <= criticalDistance) {
+      console.log('collided with p2');
       isBall1Collided.value = false;
       isBall2Collided.value = true;
       runOnJS(updateBallCollidedData)('Player2');
@@ -197,54 +198,67 @@ const Game = () => {
 
   useDerivedValue(() => {
     if (isBallCollided.value) {
-      ballX.value = withReflection({
-        velocity:
-          isP1Dragging.value && isBall1Collided.value
-            ? velocityX1.value * 5
-            : isP2Dragging.value && isBall2Collided.value
-            ? velocityX2.value * 5
-            : ballVx.value,
-        clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
-      });
+      if (isBall1Collided.value) {
+        let dx = dragX1.value - ballX.value;
+        let dy = dragY1.value - ballY.value;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        dx /= d;
+        dy /= d;
+        const v =
+          (velocityX1.value - ballVx.value) * dx +
+          (velocityY1.value - ballVy.value) * dy;
+        if (v < 0) {
+          const a = velocityX1.value * dx + velocityY1.value * dy;
+          const b = ballVx.value * dx + ballVy.value * dy;
+          ballVx.value += (a - b) * dx * 1.5;
+          ballVy.value += (a - b) * dy * 1.5;
+          ballX.value = withReflection({
+            velocity: ballVx.value,
+            ballVelocity: isP1Dragging.value ? ballVx : undefined,
+            isPlayerMoving: isP1Dragging.value,
+            clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
+          });
+          ballY.value = withReflection({
+            velocity: ballVy.value,
+            ballVelocity: isP1Dragging.value ? ballVy : undefined,
+            isPlayerMoving: isP1Dragging.value,
+            clamp: [
+              2 * SIDE_BORDER_WIDTH,
+              AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
+            ],
+          });
+        }
+      } else if (isBall2Collided.value) {
+        let dx = dragX2.value - ballX.value;
+        let dy = dragY2.value - ballY.value;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        dx /= d;
+        dy /= d;
+        const v =
+          (velocityX2.value - ballVx.value) * dx +
+          (velocityY2.value - ballVy.value) * dy;
+        if (v < 0) {
+          const a = velocityX2.value * dx + velocityY2.value * dy;
+          const b = ballVx.value * dx + ballVy.value * dy;
 
-      ballY.value = withReflection({
-        velocity:
-          isP1Dragging.value && isBall1Collided.value
-            ? velocityY1.value * 5
-            : isP2Dragging.value && isBall2Collided.value
-            ? velocityY2.value * 5
-            : ballVy.value,
-        clamp: [
-          2 * SIDE_BORDER_WIDTH,
-          AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
-        ],
-      });
-
-      if (isBall1Collided.value && isP1Dragging.value) {
-        ballVx.value = getBallVelocity({
-          velocity: velocityX1.value * 5,
-          clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
-        });
-        ballVy.value = getBallVelocity({
-          velocity: velocityY1.value * 5,
-          clamp: [
-            2 * SIDE_BORDER_WIDTH,
-            AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
-          ],
-        });
-      }
-      if (isBall2Collided.value && isP2Dragging.value) {
-        ballVx.value = getBallVelocity({
-          velocity: velocityX2.value * 2,
-          clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
-        });
-        ballVy.value = getBallVelocity({
-          velocity: velocityY2.value * 2,
-          clamp: [
-            2 * SIDE_BORDER_WIDTH,
-            AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
-          ],
-        });
+          ballVx.value += (a - b) * dx * 1.5;
+          ballVy.value += (a - b) * dy * 1.5;
+          ballX.value = withReflection({
+            velocity: ballVx.value,
+            ballVelocity: isP2Dragging.value ? ballVx : undefined,
+            isPlayerMoving: isP2Dragging.value,
+            clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
+          });
+          ballY.value = withReflection({
+            velocity: ballVy.value,
+            ballVelocity: isP2Dragging.value ? ballVy : undefined,
+            isPlayerMoving: isP2Dragging.value,
+            clamp: [
+              2 * SIDE_BORDER_WIDTH,
+              AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
+            ],
+          });
+        }
       }
     }
   }, [isBallCollided.value]);
@@ -289,6 +303,8 @@ const Game = () => {
     },
     onEnd: (event, ctx) => {
       isP1Dragging.value = false;
+      velocityX1.value = 0;
+      velocityY1.value = 0;
     },
   });
   const onGestureEvent2 = useAnimatedGestureHandler({
@@ -305,6 +321,8 @@ const Game = () => {
     },
     onEnd: (event, ctx) => {
       isP2Dragging.value = false;
+      velocityX2.value = 0;
+      velocityY2.value = 0;
     },
   });
 
@@ -332,17 +350,6 @@ const Game = () => {
   const sendBallDataToSocket = ({x, y, Vx, Vy}) => {
     socket.emit('positionChangeBall', {x, y, Vx, Vy});
   };
-
-  // useDerivedValue(() => {
-  //   const {playerX, playerY} = handleBoundaryCondition(
-  //     dragX2.value,
-  //     dragY2.value,
-  //     HEIGHT / 2 + FINAL_DIAMETER / 2,
-  //     HEIGHT,
-  //   );
-  //   dragX2.value = playerX;
-  //   dragY2.value = playerY;
-  // }, [dragX2.value, dragY2.value]);
 
   const player1Style = useAnimatedStyle(() => {
     runOnJS(sendPlayer1DataToSocket)({x: dragX1.value, y: dragY1.value});
@@ -396,6 +403,7 @@ const Game = () => {
       Vx: ballVx.value,
       Vy: ballVy.value,
     });
+
     return {
       transform: [
         {translateX: ballX.value - BALL_DIAMETER / 2},

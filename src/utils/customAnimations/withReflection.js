@@ -44,6 +44,10 @@ export function withReflection(userConfig, callback) {
           animation.current = config.clamp[1] - 1;
         }
       }
+      if (animation.isPlayerMoving) {
+        animation.ballVelocity.value = animation.velocity;
+        console.log('ballVelocity :', animation.ballVelocity);
+      }
 
       if (Math.abs(v) < VELOCITY_EPS) {
         return true;
@@ -76,6 +80,8 @@ export function withReflection(userConfig, callback) {
       animation.lastTimestamp = now;
       animation.startTimestamp = now;
       animation.initialVelocity = config.velocity;
+      animation.ballVelocity = config.ballVelocity;
+      animation.isPlayerMoving = config.isPlayerMoving;
       validateConfig();
     }
 
