@@ -47,7 +47,7 @@ import AnimatedGoal from '../../components/AnimatedGoal';
 
 import io from 'socket.io-client';
 
-const socket = io('http://192.168.0.103:8001');
+const socket = io('http://192.168.0.104:8001');
 
 const Game = () => {
   const [p1Score, setP1Score] = useState(0);
@@ -124,8 +124,6 @@ const Game = () => {
           data.lastUserCollided === 'Player2') ||
         (currentUser.value === 'Player2' && data.lastUserCollided === 'Player1')
       ) {
-        console.log('received BallPositionData : ', data);
-        console.log('currentUser : ', currentUser);
         ballX.value = data.x;
         ballY.value = data.y;
         ballVx.value = data.Vx;
