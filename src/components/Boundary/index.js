@@ -1,12 +1,10 @@
-/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
+import {StyleSheet} from 'react-native';
 import {Svg, Rect, Defs, Circle, Stop, LinearGradient} from 'react-native-svg';
 import {
   WIDTH,
   AVAILABLE_HEIGHT,
-  //   AVAILABLE_WIDTH,
   SIDE_BORDER_WIDTH,
-  //   STROKE_WIDTH,
   HEIGHT,
 } from '../../utils/Constants/appConstants';
 export function Boundary() {
@@ -15,11 +13,7 @@ export function Boundary() {
       <Svg
         height={AVAILABLE_HEIGHT + 10}
         width={SIDE_BORDER_WIDTH}
-        style={{
-          position: 'absolute',
-          zIndex: 999,
-          left: -SIDE_BORDER_WIDTH,
-        }}>
+        style={styles.leftBoundary}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -38,7 +32,7 @@ export function Boundary() {
       <Svg
         height={AVAILABLE_HEIGHT + 10}
         width={SIDE_BORDER_WIDTH}
-        style={{position: 'absolute', zIndex: 999, left: WIDTH}}>
+        style={styles.rightBoundary}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -53,15 +47,7 @@ export function Boundary() {
           fill="url(#grad)"
         />
       </Svg>
-      <Svg
-        height={4}
-        width={WIDTH}
-        style={{
-          position: 'absolute',
-          zIndex: 999,
-          left: 0,
-          top: HEIGHT / 2 + 5,
-        }}>
+      <Svg height={4} width={WIDTH} style={styles.centerLine}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -92,10 +78,7 @@ export function Boundary() {
         />
       </Svg>
 
-      <Svg
-        height="10"
-        width={WIDTH}
-        style={{zIndex: 9999, position: 'absolute', top: HEIGHT + 10}}>
+      <Svg height="10" width={WIDTH} style={styles.bottomBoundary}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor="red" stopOpacity="1" />
@@ -116,15 +99,7 @@ export function Boundary() {
         />
       </Svg>
 
-      <Svg
-        height={WIDTH * 0.4}
-        width={WIDTH * 0.4}
-        style={{
-          position: 'absolute',
-          zIndex: -1,
-          left: WIDTH / 2 - WIDTH * 0.2,
-          top: HEIGHT / 2 - WIDTH * 0.2 - 4 + 10,
-        }}>
+      <Svg height={WIDTH * 0.4} width={WIDTH * 0.4} style={styles.centerCircle}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -141,15 +116,7 @@ export function Boundary() {
         />
       </Svg>
 
-      <Svg
-        height={WIDTH * 0.4}
-        width={WIDTH * 0.8}
-        style={{
-          position: 'absolute',
-          zIndex: -1,
-          left: WIDTH / 2 - WIDTH * 0.4,
-          // top: HEIGHT / 2 - 90,
-        }}>
+      <Svg height={WIDTH * 0.4} width={WIDTH * 0.8} style={styles.goalTop}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -165,15 +132,7 @@ export function Boundary() {
           strokeWidth="4"
         />
       </Svg>
-      <Svg
-        height={WIDTH * 0.4}
-        width={WIDTH * 0.8}
-        style={{
-          position: 'absolute',
-          zIndex: -1,
-          left: WIDTH / 2 - WIDTH * 0.4,
-          top: HEIGHT - WIDTH * 0.4 + 20,
-        }}>
+      <Svg height={WIDTH * 0.4} width={WIDTH * 0.8} style={styles.goalBottom}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFD080" stopOpacity="1" />
@@ -192,3 +151,44 @@ export function Boundary() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  leftBoundary: {
+    position: 'absolute',
+    zIndex: 999,
+    left: -SIDE_BORDER_WIDTH,
+  },
+  rightBoundary: {
+    position: 'absolute',
+    zIndex: 999,
+    left: WIDTH,
+  },
+  centerLine: {
+    position: 'absolute',
+    zIndex: 999,
+    left: 0,
+    top: HEIGHT / 2 + 5,
+  },
+  bottomBoundary: {
+    zIndex: 9999,
+    position: 'absolute',
+    top: HEIGHT + 10,
+  },
+  centerCircle: {
+    position: 'absolute',
+    zIndex: -1,
+    left: WIDTH / 2 - WIDTH * 0.2,
+    top: HEIGHT / 2 - WIDTH * 0.2 - 4 + 10,
+  },
+  goalTop: {
+    position: 'absolute',
+    zIndex: -1,
+    left: WIDTH / 2 - WIDTH * 0.4,
+  },
+  goalBottom: {
+    position: 'absolute',
+    zIndex: -1,
+    left: WIDTH / 2 - WIDTH * 0.4,
+    top: HEIGHT - WIDTH * 0.4 + 20,
+  },
+});

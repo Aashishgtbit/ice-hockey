@@ -7,7 +7,7 @@
  * @flow strict-local
  */
 
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useContext} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -44,10 +44,7 @@ import ScoreBoard from '../../components/ScoreBoard';
 import CustomModal from '../../components/CustomModal';
 import Result from '../../components/CustomModal/Result';
 import AnimatedGoal from '../../components/AnimatedGoal';
-
-import io from 'socket.io-client';
-
-const socket = io('http://192.168.0.104:8001');
+import {SocketContext} from '../../context/socket';
 
 const Game = () => {
   const [p1Score, setP1Score] = useState(0);
@@ -56,7 +53,21 @@ const Game = () => {
   const [showGoal, setShowGoal] = useState(false);
 
   const [connectedUser, setConnectedUser] = useState([]);
-  const currentUser = useSharedValue('');
+  // const currentUser = useSharedValue('');
+  const [currentUser, setCurrentUser] = useState();
+  const socket = useContext(SocketContext);
+  useEffect(() => {
+    console.log('mounting *****');
+    socket.emit('joinRoom', {
+      username: 'Aashish',
+      roomname: 'IceHockey',
+      screenDimension: {width: WIDTH, height: HEIGHT},
+    });
+    return () => {
+      console.log('unmount called');
+      socket.disconnect();
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (p1Score === PENULTIMATE_SCORE || p2Score === PENULTIMATE_SCORE) {
@@ -75,6 +86,7 @@ const Game = () => {
   }, []);
 
   const incrementGoal = (player) => {
+    console.log({p1Score, p2Score});
     if (player === 'Player1') {
       setP1Score(p1Score + 1);
     } else {
@@ -103,46 +115,71 @@ const Game = () => {
   const ballVx = useSharedValue(0);
   const ballVy = useSharedValue(0);
 
-  useEffect(() => {
-    socket.emit('joinRoom', {
-      username: 'Aashish',
-      roomname: 'IceHockey',
-      screenDimension: {width: WIDTH, height: HEIGHT},
-    });
-    socket.on('message', (data) => {
-      if (Platform.OS === 'android') {
-        ToastAndroid.show(data.text, ToastAndroid.LONG);
-      }
-    });
+  const handleJoinMessage = useCallback((data) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.text, ToastAndroid.LONG);
+    }
+    console.log('joinMessage :', data);
+    // currentUser.value = data.currentUser;
+    setCurrentUser(data.currentUser);
+  }, []);
 
-    socket.on('getUsers', (data) => {
-      setConnectedUser(data);
-    });
-    socket.on('positionChangeBall', (data) => {
+  const handleMessage = useCallback((data) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(data.text, ToastAndroid.LONG);
+    }
+  }, []);
+
+  const handleGetUsers = useCallback((data) => {
+    setConnectedUser(data);
+  }, []);
+
+  const handlePositionChangeBall = useCallback(
+    (data) => {
       if (
-        (currentUser.value === 'Player1' &&
-          data.lastUserCollided === 'Player2') ||
-        (currentUser.value === 'Player2' && data.lastUserCollided === 'Player1')
+        (currentUser === 'Player1' && data.lastUserCollided === 'Player2') ||
+        (currentUser === 'Player2' && data.lastUserCollided === 'Player1')
       ) {
         ballX.value = data.x;
         ballY.value = data.y;
         ballVx.value = data.Vx;
         ballVy.value = data.Vy;
       }
-    });
-    return () => socket.disconnect();
+    },
+    [currentUser, ballX, ballY, ballVx, ballVy],
+  );
+  const handlePositionChangP1 = useCallback(
+    (pos) => {
+      dragX1.value = pos.x;
+      dragY1.value = pos.y;
+      isP1Dragging.value = true;
+    },
+    [dragX1, dragY1, isP1Dragging],
+  );
+  const handlePositionChangP2 = useCallback(
+    (pos) => {
+      dragX2.value = pos.x;
+      dragY2.value = pos.y;
+      isP2Dragging.value = true;
+    },
+    [dragX2, dragY2, isP2Dragging],
+  );
+
+  useEffect(() => {
+    socket.on('joinMessage', handleJoinMessage);
+    socket.on('message', handleMessage);
+    socket.on('getUsers', handleGetUsers);
+    socket.on('positionChangeBall', handlePositionChangeBall);
+    socket.on('positionChangeP1', handlePositionChangP1);
+    socket.on('positionChangeP2', handlePositionChangP2);
   }, [
-    dragX1,
-    dragY1,
-    dragX2,
-    dragY2,
-    isP1Dragging,
-    isP2Dragging,
-    ballX,
-    ballY,
-    currentUser,
-    ballVx,
-    ballVy,
+    socket,
+    handleJoinMessage,
+    handleMessage,
+    handleGetUsers,
+    handlePositionChangeBall,
+    handlePositionChangP1,
+    handlePositionChangP2,
   ]);
 
   const updateBallCollidedData = (user) => {
@@ -163,12 +200,12 @@ const Game = () => {
     const criticalDistance = (FINAL_DIAMETER + BALL_DIAMETER) / 2;
 
     if (distanceBetweenCentresP1 <= criticalDistance) {
-      console.log('collided with p1');
+      // console.log('collided with p1');
       isBall1Collided.value = true;
       isBall2Collided.value = false;
       runOnJS(updateBallCollidedData)('Player1');
     } else if (distanceBetweenCentresP2 <= criticalDistance) {
-      console.log('collided with p2');
+      // console.log('collided with p2');
       isBall1Collided.value = false;
       isBall2Collided.value = true;
       runOnJS(updateBallCollidedData)('Player2');
@@ -187,83 +224,47 @@ const Game = () => {
     ballY.value,
   ]);
 
-  socket.on('joinMessage', (data) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(data.text, ToastAndroid.LONG);
-    }
-    currentUser.value = data.currentUser;
-  });
-
   useDerivedValue(() => {
     if (isBallCollided.value) {
-      if (isBall1Collided.value) {
-        let dx = dragX1.value - ballX.value;
-        let dy = dragY1.value - ballY.value;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        dx /= d;
-        dy /= d;
-        const v =
-          (velocityX1.value - ballVx.value) * dx +
-          (velocityY1.value - ballVy.value) * dy;
-        if (v < 0) {
-          const a = velocityX1.value * dx + velocityY1.value * dy;
-          const b = ballVx.value * dx + ballVy.value * dy;
-          ballVx.value += (a - b) * dx * 1.5;
-          ballVy.value += (a - b) * dy * 1.5;
-          ballX.value = withReflection({
-            velocity: ballVx.value,
-            ballVelocity: isP1Dragging.value ? ballVx : undefined,
-            isPlayerMoving: isP1Dragging.value,
-            clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
-          });
-          ballY.value = withReflection({
-            velocity: ballVy.value,
-            ballVelocity: isP1Dragging.value ? ballVy : undefined,
-            isPlayerMoving: isP1Dragging.value,
-            clamp: [
-              2 * SIDE_BORDER_WIDTH,
-              AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
-            ],
-          });
-        }
-      } else if (isBall2Collided.value) {
-        let dx = dragX2.value - ballX.value;
-        let dy = dragY2.value - ballY.value;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        dx /= d;
-        dy /= d;
-        const v =
-          (velocityX2.value - ballVx.value) * dx +
-          (velocityY2.value - ballVy.value) * dy;
-        if (v < 0) {
-          const a = velocityX2.value * dx + velocityY2.value * dy;
-          const b = ballVx.value * dx + ballVy.value * dy;
-
-          ballVx.value += (a - b) * dx * 1.5;
-          ballVy.value += (a - b) * dy * 1.5;
-          ballX.value = withReflection({
-            velocity: ballVx.value,
-            ballVelocity: isP2Dragging.value ? ballVx : undefined,
-            isPlayerMoving: isP2Dragging.value,
-            clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
-          });
-          ballY.value = withReflection({
-            velocity: ballVy.value,
-            ballVelocity: isP2Dragging.value ? ballVy : undefined,
-            isPlayerMoving: isP2Dragging.value,
-            clamp: [
-              2 * SIDE_BORDER_WIDTH,
-              AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
-            ],
-          });
-        }
+      const dragX = isBall1Collided.value ? dragX1.value : dragX2.value;
+      const dragY = isBall1Collided.value ? dragY1.value : dragY2.value;
+      let dx = dragX - ballX.value;
+      let dy = dragY - ballY.value;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      dx /= d;
+      dy /= d;
+      const vx = isBall1Collided.value ? velocityX1.value : velocityX2.value;
+      const vy = isBall1Collided.value ? velocityY1.value : velocityY2.value;
+      const v = (vx - ballVx.value) * dx + (vy - ballVy.value) * dy;
+      if (v < 0) {
+        const a = vx * dx + vy * dy;
+        const b = ballVx.value * dx + ballVy.value * dy;
+        ballVx.value += (a - b) * dx * 1.5;
+        ballVy.value += (a - b) * dy * 1.5;
+        const isPlayerMoving =
+          (isBall1Collided.value && isP1Dragging.value) ||
+          (isBall2Collided.value && isP2Dragging.value);
+        ballX.value = withReflection({
+          velocity: ballVx.value,
+          ballVelocity: isPlayerMoving ? ballVx : undefined,
+          isPlayerMoving: isPlayerMoving,
+          clamp: [SIDE_BORDER_WIDTH, WIDTH - SIDE_BORDER_WIDTH],
+        });
+        ballY.value = withReflection({
+          velocity: ballVy.value,
+          ballVelocity: isPlayerMoving ? ballVy : undefined,
+          isPlayerMoving: isPlayerMoving,
+          clamp: [
+            2 * SIDE_BORDER_WIDTH,
+            AVAILABLE_HEIGHT - 2 * SIDE_BORDER_WIDTH,
+          ],
+        });
       }
     }
   }, [isBallCollided.value]);
 
   const resetBallParameters = () => {
     'worklet';
-
     // ball parameters
     ballX.value = WIDTH / 2;
     ballY.value = HEIGHT / 2;
@@ -293,7 +294,6 @@ const Game = () => {
     },
     onActive: (event, ctx) => {
       dragX1.value = ctx.startX + event.translationX;
-
       dragY1.value = ctx.startY + event.translationY;
       velocityX1.value = event.velocityX;
       velocityY1.value = event.velocityY;
@@ -323,25 +323,13 @@ const Game = () => {
       velocityY2.value = 0;
     },
   });
-
-  socket.on('positionChangeP1', (pos) => {
-    dragX1.value = pos.x;
-    dragY1.value = pos.y;
-    isP1Dragging.value = true;
-  });
-  socket.on('positionChangeP2', (pos) => {
-    dragX2.value = pos.x;
-    dragY2.value = pos.y;
-    isP2Dragging.value = true;
-  });
-
   const sendPlayer1DataToSocket = ({x, y}) => {
-    if (currentUser.value === 'Player1') {
+    if (currentUser === 'Player1') {
       socket.emit('positionChangeP1', {x, y});
     }
   };
   const sendPlayer2DataToSocket = ({x, y}) => {
-    if (currentUser.value === 'Player2') {
+    if (currentUser === 'Player2') {
       socket.emit('positionChangeP2', {x, y});
     }
   };
@@ -410,13 +398,15 @@ const Game = () => {
     };
   }, [ballX.value, ballY.value]);
 
+  console.log('currentUser :', currentUser);
+
   return (
     <>
       <SafeAreaView style={styles.container}>
         <View style={styles.wrapperParentContainer}>
           <Boundary />
           <Animated.View style={[styles.ball, ballStyle]} />
-          {currentUser.value === 'Player1' || connectedUser.length === 0 ? (
+          {currentUser === 'Player1' || connectedUser.length === 0 ? (
             <PanGestureHandler onGestureEvent={onGestureEvent1}>
               <Animated.View style={[styles.player1, player1Style]}>
                 <Text style={styles.boldWhite}>Player1</Text>
@@ -428,7 +418,7 @@ const Game = () => {
             </Animated.View>
           )}
 
-          {currentUser.value === 'Player2' || connectedUser.length === 0 ? (
+          {currentUser === 'Player2' || connectedUser.length === 0 ? (
             <PanGestureHandler onGestureEvent={onGestureEvent2}>
               <Animated.View style={[styles.player2, player2Style]}>
                 <Text style={styles.boldWhite}>Player2</Text>

@@ -38,11 +38,11 @@ export const handleBallVelocity = (bi, pi) => {
   'worklet';
   // return bi + 4 * pi;
   // return (-3 * bi) / 4 + ((2 - 4) * pi) / 4;
-  console.log('bi: ', bi / 2, 'pi:', pi / 2);
+  // console.log('bi: ', bi / 2, 'pi:', pi / 2);
   const finalVelocity =
     ((bi / 2) * (Ball_MASS - PLAYER_MASS) + (2 * PLAYER_MASS * pi) / 2) /
       Ball_MASS +
     PLAYER_MASS;
-  console.log('finalVelocity :', finalVelocity);
+  // console.log('finalVelocity :', finalVelocity);
   return finalVelocity;
 };

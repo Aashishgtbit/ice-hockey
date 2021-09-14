@@ -46,7 +46,7 @@ export function withReflection(userConfig, callback) {
       }
       if (animation.isPlayerMoving) {
         animation.ballVelocity.value = animation.velocity;
-        console.log('ballVelocity :', animation.ballVelocity);
+        // console.log('ballVelocity :', animation.ballVelocity);
       }
 
       if (Math.abs(v) < VELOCITY_EPS) {
